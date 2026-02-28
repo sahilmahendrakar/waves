@@ -3,6 +3,9 @@ import SwiftUI
 struct ContentView: View {
     @AppStorage("geminiAPIKey") private var apiKey = ""
     @StateObject private var audioPlayer = AudioPlayer()
+    #if os(macOS)
+    @StateObject private var appMonitor = ActiveAppMonitor()
+    #endif
     @State private var lyriaService: LyriaService?
 
     @State private var prompt = "minimal techno with deep bass"
@@ -43,6 +46,20 @@ struct ContentView: View {
             Text("Lyria RealTime Music")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+
+            #if os(macOS)
+            HStack(spacing: 6) {
+                if let icon = appMonitor.appIcon {
+                    Image(nsImage: icon)
+                        .resizable()
+                        .frame(width: 16, height: 16)
+                }
+                Text(appMonitor.appName)
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(.top, 4)
+            #endif
         }
         .padding(.vertical, 20)
         .frame(maxWidth: .infinity)
