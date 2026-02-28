@@ -35,7 +35,7 @@ final class WaveSession: ObservableObject {
 
     var currentParameters: WaveParameters {
         WaveParameters(
-            bpm: Int(lerp(60, 200, intensity)),
+            bpm: Int(lerp(60, 150, intensity)),
             density: lerp(0.1, 0.9, intensity),
             brightness: lerp(0.2, 0.8, intensity),
             calmWeight: max(1.0 - intensity, 0.1),

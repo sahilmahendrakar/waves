@@ -72,8 +72,10 @@ struct ContentView: View {
         .sheet(isPresented: $showingSettings) {
             #if os(macOS)
             SettingsView(apiKey: $apiKey, focusGuard: focusGuard)
+                .environmentObject(appState)
             #else
             SettingsView(apiKey: $apiKey)
+                .environmentObject(appState)
             #endif
         }
     }
