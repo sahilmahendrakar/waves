@@ -57,6 +57,16 @@ struct ContentView: View {
                 Text(appMonitor.appName)
                     .font(.caption)
                     .foregroundStyle(.tertiary)
+                if let url = appMonitor.activeURL,
+                   let host = URL(string: url)?.host {
+                    Text("\u{2014}")
+                        .font(.caption)
+                        .foregroundStyle(.quaternary)
+                    Text(host)
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .lineLimit(1)
+                }
             }
             .padding(.top, 4)
             #endif
