@@ -50,12 +50,7 @@ final class AppState: ObservableObject {
         waveSession.onParametersChanged = { [weak self] params, bpmChanged in
             Task { @MainActor in
                 guard let self else { return }
-                if self.userSteeringPrompt == nil {
-                    await self.lyriaService.setPrompts([
-                        (text: self.calmPrompt, weight: params.calmWeight),
-                        (text: self.intensePrompt, weight: params.intenseWeight),
-                    ])
-                }
+                await self.lyriaService.setPrompts(self.wavePrompts(for: params))
                 await self.lyriaService.setMusicConfig(
                     bpm: bpmChanged ? params.bpm : nil,
                     density: params.density,
@@ -116,10 +111,7 @@ final class AppState: ObservableObject {
         }
 
         let initial = waveSession.currentParameters
-        await lyriaService.setPrompts([
-            (text: calmPrompt, weight: initial.calmWeight),
-            (text: intensePrompt, weight: initial.intenseWeight),
-        ])
+        await lyriaService.setPrompts(wavePrompts(for: initial))
         await lyriaService.setMusicConfig(
             bpm: initial.bpm,
             density: initial.density,
@@ -167,10 +159,7 @@ final class AppState: ObservableObject {
         audioPlayer.cancelFade()
         waveSession.restart()
         let initial = waveSession.currentParameters
-        await lyriaService.setPrompts([
-            (text: calmPrompt, weight: initial.calmWeight),
-            (text: intensePrompt, weight: initial.intenseWeight),
-        ])
+        await lyriaService.setPrompts(wavePrompts(for: initial))
         await lyriaService.setMusicConfig(
             bpm: initial.bpm,
             density: initial.density,
@@ -196,7 +185,18 @@ final class AppState: ObservableObject {
         guard connectionState == .connected, isStreaming else { return }
         prompt = text
         userSteeringPrompt = text
-        await lyriaService.setPrompts([(text: text, weight: 1.0)])
+        await lyriaService.setPrompts(wavePrompts(for: waveSession.currentParameters))
+    }
+
+    private func wavePrompts(for params: WaveParameters) -> [(text: String, weight: Double)] {
+        var prompts: [(text: String, weight: Double)] = [
+            (text: calmPrompt, weight: params.calmWeight),
+            (text: intensePrompt, weight: params.intenseWeight),
+        ]
+        if let steering = userSteeringPrompt {
+            prompts.append((text: steering, weight: 2.0))
+        }
+        return prompts
     }
 
     func applyPreferences(_ prefs: MusicPreferences) {
