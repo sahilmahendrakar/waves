@@ -7,6 +7,7 @@ struct WaveView: View {
     let isConnecting: Bool
     var isViolating = false
     var violationSeconds = 0
+    var isSuspended = false
 
     var onStart: () -> Void
     var onPause: () -> Void
@@ -88,7 +89,20 @@ struct WaveView: View {
 
                 // Center content
                 VStack(spacing: 4) {
-                    if isViolating {
+                    if isSuspended {
+                        Image(systemName: "pause.circle.fill")
+                            .font(.system(size: 28))
+                            .foregroundStyle(.orange)
+
+                        Text("Wave Reset")
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundStyle(.orange)
+
+                        Text("Return to focus\nto continue")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    } else if isViolating {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .font(.system(size: 28))
                             .foregroundStyle(.red)
@@ -112,7 +126,11 @@ struct WaveView: View {
             .frame(width: 180, height: 180)
             .padding(.vertical, 4)
             .overlay {
-                if isViolating {
+                if isSuspended {
+                    Circle()
+                        .stroke(Color.orange.opacity(0.4), lineWidth: 8)
+                        .frame(width: 180, height: 180)
+                } else if isViolating {
                     Circle()
                         .stroke(Color.red.opacity(0.4), lineWidth: 8)
                         .frame(width: 180, height: 180)

@@ -70,6 +70,17 @@ final class WaveSession: ObservableObject {
         startTimer()
     }
 
+    func restart() {
+        timerTask?.cancel()
+        timerTask = nil
+        elapsedTime = 0
+        intensity = 0
+        lastSentBPM = 60
+        timeSinceLastUpdate = Self.updateInterval
+        state = .running
+        startTimer()
+    }
+
     func cancel() {
         timerTask?.cancel()
         timerTask = nil

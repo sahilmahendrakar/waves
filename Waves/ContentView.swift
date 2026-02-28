@@ -40,7 +40,10 @@ struct ContentView: View {
             #if os(macOS)
             focusGuard.attach(to: appMonitor)
             focusGuard.onViolationTriggered = {
-                Task { await cancelWave() }
+                Task { await suspendWave() }
+            }
+            focusGuard.onRefocused = {
+                Task { await resumeSuspendedWave() }
             }
             #endif
         }
@@ -145,6 +148,7 @@ struct ContentView: View {
             isConnecting: connectionState == .connecting,
             isViolating: isFocusViolating,
             violationSeconds: focusViolationSeconds,
+            isSuspended: isFocusSuspended,
             onStart: { Task { await startWave() } },
             onPause: { Task { await pauseWave() } },
             onResume: { Task { await resumeWave() } },
@@ -165,6 +169,14 @@ struct ContentView: View {
         focusGuard.violationSeconds
         #else
         0
+        #endif
+    }
+
+    private var isFocusSuspended: Bool {
+        #if os(macOS)
+        focusGuard.isSuspended
+        #else
+        false
         #endif
     }
 
@@ -352,6 +364,33 @@ struct ContentView: View {
         #endif
         waveSession.cancel()
         await stopWaveMusic()
+    }
+
+    private func suspendWave() async {
+        guard let service = lyriaService else { return }
+        waveSession.pause()
+        await service.pause()
+        audioPlayer.pause()
+        isStreaming = false
+    }
+
+    private func resumeSuspendedWave() async {
+        guard let service = lyriaService else { return }
+        waveSession.restart()
+        let initial = waveSession.currentParameters
+        await service.setPrompts([
+            (text: Self.calmPrompt, weight: initial.calmWeight),
+            (text: Self.intensePrompt, weight: initial.intenseWeight),
+        ])
+        await service.setMusicConfig(
+            bpm: initial.bpm,
+            density: initial.density,
+            brightness: initial.brightness
+        )
+        await service.resetContext()
+        audioPlayer.resume()
+        await service.play()
+        isStreaming = true
     }
 
     private func stopWaveMusic() async {

@@ -20,6 +20,7 @@ final class FocusGuard: ObservableObject {
     }
     @Published var isViolating = false
     @Published var violationSeconds = 0
+    @Published var isSuspended = false
 
     var isEnabled = false {
         didSet {
@@ -32,6 +33,7 @@ final class FocusGuard: ObservableObject {
     }
 
     var onViolationTriggered: (() -> Void)?
+    var onRefocused: (() -> Void)?
 
     static let defaultBlockedApps = ["Instagram", "Reddit", "TikTok"]
     static let defaultBlockedDomains = [
@@ -122,12 +124,11 @@ final class FocusGuard: ObservableObject {
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(1))
                 guard !Task.isCancelled, let self, self.isEnabled else { break }
-                if self.isViolating {
+                if self.isViolating && !self.isSuspended {
                     self.violationSeconds += 1
                     if self.violationSeconds >= Self.graceSeconds {
+                        self.isSuspended = true
                         self.onViolationTriggered?()
-                        self.stopMonitoring()
-                        return
                     }
                 }
             }
@@ -140,6 +141,7 @@ final class FocusGuard: ObservableObject {
         timerTask = nil
         isViolating = false
         violationSeconds = 0
+        isSuspended = false
     }
 
     private func evaluate(appName: String, activeURL: String?) {
@@ -149,8 +151,13 @@ final class FocusGuard: ObservableObject {
             isViolating = true
             violationSeconds = 0
         } else if !blocked && isViolating {
+            let wasSuspended = isSuspended
             isViolating = false
             violationSeconds = 0
+            isSuspended = false
+            if wasSuspended {
+                onRefocused?()
+            }
         }
     }
 
