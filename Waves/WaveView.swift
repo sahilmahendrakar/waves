@@ -270,8 +270,8 @@ struct WaveView: View {
         return AngularGradient(
             colors: [c.opacity(0.4), c.opacity(0.7), c],
             center: .center,
-            startAngle: .degrees(-90),
-            endAngle: .degrees(-90 + 360 * session.progress)
+            startAngle: .degrees(0),
+            endAngle: .degrees(360 * session.progress)
         )
     }
 
