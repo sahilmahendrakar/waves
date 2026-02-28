@@ -27,6 +27,16 @@ struct WaveView: View {
 
     var body: some View {
         VStack(spacing: 20) {
+            VStack(spacing: 6) {
+                Text("Waves")
+                    .font(.system(size: 34, weight: .semibold, design: .rounded))
+                Text("Relax. Listen. Focus.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .tracking(1.2)
+            }
+            .padding(.bottom, 4)
+
             switch session.state {
             case .idle:
                 idleView
