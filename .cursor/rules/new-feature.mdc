@@ -1,0 +1,4 @@
+---
+alwaysApply: false
+---
+when you are implementing a new feature make it as modular as possible. Try keeping everything related to the new feature in their own files and add only a few lines to common shared files. After implementing a feature use the xcode cli to run a build. If there are build failures, fix the build failures until the build succeeds.

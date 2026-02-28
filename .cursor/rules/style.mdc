@@ -1,0 +1,4 @@
+---
+alwaysApply: true
+---
+Do not write comments. Write good self documenting code with sensible function and variable names. 
