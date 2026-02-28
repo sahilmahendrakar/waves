@@ -1,6 +1,6 @@
 # Waves
 
-AI-generated music that adapts to your focus.
+Your desktop musical companion: AI-generated music that adapts to your focus.
 
 ![Waves](Waves.png)
 
