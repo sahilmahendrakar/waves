@@ -7,7 +7,9 @@ struct SettingsView: View {
     @ObservedObject var focusGuard: FocusGuard
     #endif
     @AppStorage("appMode") private var mode: AppMode = .wave
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var showingMusicPreferences = false
+    @State private var showingResetOnboardingConfirmation = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -99,6 +101,32 @@ struct SettingsView: View {
                     }
                     .controlSize(.small)
                 }
+
+                Divider()
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Advanced")
+                        .font(.subheadline.bold())
+
+                    Button(role: .destructive) {
+                        showingResetOnboardingConfirmation = true
+                    } label: {
+                        Label("Reset Onboarding", systemImage: "arrow.counterclockwise")
+                    }
+                    .controlSize(.small)
+                    .alert("Reset Onboarding?", isPresented: $showingResetOnboardingConfirmation) {
+                        Button("Cancel", role: .cancel) {}
+                        Button("Reset", role: .destructive) {
+                            resetOnboarding()
+                        }
+                    } message: {
+                        Text("This will clear your music preferences and show the onboarding flow on the next app launch.")
+                    }
+
+                    Text("Clears preferences and restarts onboarding on next launch.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -106,6 +134,12 @@ struct SettingsView: View {
         .sheet(isPresented: $showingMusicPreferences) {
             MusicPreferencesEditor(appState: appState)
         }
+    }
+
+    private func resetOnboarding() {
+        UserDefaults.standard.removeObject(forKey: "musicPreferences")
+        hasCompletedOnboarding = false
+        dismiss()
     }
 }
 

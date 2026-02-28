@@ -60,7 +60,7 @@ struct OnboardingView: View {
             Text("Welcome to Waves")
                 .font(.largeTitle.weight(.bold))
 
-            Text("Let's personalize your music experience.\nTell us what you like and we'll tailor the\nsound to match your taste.")
+            Text("Adaptive music that responds to your focus.\nTell us what you like and we'll craft the\nperfect soundscape to keep you in the zone.")
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
