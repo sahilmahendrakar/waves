@@ -275,18 +275,26 @@ private struct FocusGuardSettingsTab: View {
 
     // MARK: - Apps section
 
+    private var currentApps: [String] {
+        focusGuard.mode == .blocklist ? focusGuard.blockedApps : focusGuard.allowedApps
+    }
+
+    private var currentDomains: [String] {
+        focusGuard.mode == .blocklist ? focusGuard.blockedDomains : focusGuard.allowedDomains
+    }
+
     private var appsSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("\(itemLabel) Apps")
                 .font(.subheadline.bold())
 
-            ForEach(focusGuard.blockedApps, id: \.self) { app in
+            ForEach(currentApps, id: \.self) { app in
                 HStack {
                     Text(app)
                         .font(.body)
                     Spacer()
                     Button {
-                        focusGuard.blockedApps.removeAll { $0 == app }
+                        removeApp(app)
                     } label: {
                         Image(systemName: "minus.circle.fill")
                             .foregroundStyle(.red)
@@ -313,13 +321,13 @@ private struct FocusGuardSettingsTab: View {
             Text("\(itemLabel) Websites")
                 .font(.subheadline.bold())
 
-            ForEach(focusGuard.blockedDomains, id: \.self) { domain in
+            ForEach(currentDomains, id: \.self) { domain in
                 HStack {
                     Text(domain)
                         .font(.body)
                     Spacer()
                     Button {
-                        focusGuard.blockedDomains.removeAll { $0 == domain }
+                        removeDomain(domain)
                     } label: {
                         Image(systemName: "minus.circle.fill")
                             .foregroundStyle(.red)
@@ -353,10 +361,33 @@ private struct FocusGuardSettingsTab: View {
 
     // MARK: - Actions
 
+    private func removeApp(_ app: String) {
+        switch focusGuard.mode {
+        case .blocklist:
+            focusGuard.blockedApps.removeAll { $0 == app }
+        case .allowlist:
+            focusGuard.allowedApps.removeAll { $0 == app }
+        }
+    }
+
+    private func removeDomain(_ domain: String) {
+        switch focusGuard.mode {
+        case .blocklist:
+            focusGuard.blockedDomains.removeAll { $0 == domain }
+        case .allowlist:
+            focusGuard.allowedDomains.removeAll { $0 == domain }
+        }
+    }
+
     private func addApp() {
         let name = newApp.trimmingCharacters(in: .whitespaces)
-        guard !name.isEmpty, !focusGuard.blockedApps.contains(name) else { return }
-        focusGuard.blockedApps.append(name)
+        guard !name.isEmpty, !currentApps.contains(name) else { return }
+        switch focusGuard.mode {
+        case .blocklist:
+            focusGuard.blockedApps.append(name)
+        case .allowlist:
+            focusGuard.allowedApps.append(name)
+        }
         newApp = ""
     }
 
@@ -374,8 +405,13 @@ private struct FocusGuardSettingsTab: View {
             domain = String(domain.dropLast())
         }
 
-        guard !domain.isEmpty, !focusGuard.blockedDomains.contains(domain) else { return }
-        focusGuard.blockedDomains.append(domain)
+        guard !domain.isEmpty, !currentDomains.contains(domain) else { return }
+        switch focusGuard.mode {
+        case .blocklist:
+            focusGuard.blockedDomains.append(domain)
+        case .allowlist:
+            focusGuard.allowedDomains.append(domain)
+        }
         newDomain = ""
     }
 }
