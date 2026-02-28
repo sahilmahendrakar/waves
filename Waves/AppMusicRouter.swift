@@ -24,7 +24,7 @@ final class AppMusicRouter: ObservableObject {
     var onPromptChanged: ((String) -> Void)?
     var originalPrompt: String = ""
 
-    private static let dwellSeconds = 10
+    private static let dwellSeconds = 3
     private weak var appMonitor: ActiveAppMonitor?
     private var cancellables = Set<AnyCancellable>()
     private var pendingRule: AppMusicRule?

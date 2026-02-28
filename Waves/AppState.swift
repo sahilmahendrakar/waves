@@ -80,7 +80,7 @@ final class AppState: ObservableObject {
         }
 
         await lyriaService.setPrompts([(text: prompt, weight: 1.0)])
-        await lyriaService.setMusicConfig(bpm: Int(bpm))
+        await lyriaService.setMusicConfig(bpm: Int(bpm), guidance: 1.0)
         audioPlayer.start()
         await lyriaService.play()
         isStreaming = true
