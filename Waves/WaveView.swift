@@ -161,7 +161,18 @@ struct WaveView: View {
 
     @ViewBuilder
     private var centerContent: some View {
-        if isSuspended {
+        if let countdown = session.countdownSeconds {
+            VStack(spacing: 6) {
+                Text("Starting wave in")
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.secondary)
+
+                Text("\(countdown)")
+                    .font(.system(size: 52, weight: .light, design: .rounded))
+                    .monospacedDigit()
+                    .contentTransition(.numericText())
+            }
+        } else if isSuspended {
             VStack(spacing: 6) {
                 Image(systemName: "pause.circle.fill")
                     .font(.system(size: 32))

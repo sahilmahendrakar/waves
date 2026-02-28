@@ -92,6 +92,22 @@ final class AudioPlayer: ObservableObject {
         isPlaying = true
     }
 
+    func fadeIn(over duration: TimeInterval) {
+        fadeTask?.cancel()
+        let steps = 50
+        let interval = duration / Double(steps)
+        playerNode.volume = 0
+
+        fadeTask = Task {
+            for step in 1...steps {
+                guard !Task.isCancelled else { return }
+                try? await Task.sleep(for: .seconds(interval))
+                guard !Task.isCancelled else { return }
+                playerNode.volume = Float(step) / Float(steps)
+            }
+        }
+    }
+
     func fadeOut(over duration: TimeInterval) {
         fadeTask?.cancel()
         let steps = 50

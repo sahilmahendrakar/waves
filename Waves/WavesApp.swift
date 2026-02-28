@@ -6,12 +6,16 @@
 //
 
 import SwiftUI
+import UserNotifications
 
 @main
 struct WavesApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onAppear {
+                    UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+                }
         }
     }
 }

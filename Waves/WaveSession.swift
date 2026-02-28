@@ -22,6 +22,7 @@ final class WaveSession: ObservableObject {
     @Published var duration: TimeInterval = 25 * 60
     @Published var elapsedTime: TimeInterval = 0
     @Published var intensity: Double = 0
+    @Published var countdownSeconds: Int? = nil
 
     var progress: Double {
         guard duration > 0 else { return 0 }
@@ -46,20 +47,25 @@ final class WaveSession: ObservableObject {
     var onWaveCompleted: (() -> Void)?
 
     private var timerTask: Task<Void, Never>?
+    private var countdownTask: Task<Void, Never>?
     private var lastSentBPM: Int = 60
     private var timeSinceLastUpdate: TimeInterval = 0
     private static let updateInterval: TimeInterval = 5
+    private static let countdownDuration = 5
 
     func start() {
         elapsedTime = 0
         intensity = 0
         lastSentBPM = 60
-        timeSinceLastUpdate = Self.updateInterval // fire immediately on first tick
+        timeSinceLastUpdate = Self.updateInterval
         state = .running
-        startTimer()
+        startCountdown { [weak self] in
+            self?.startTimer()
+        }
     }
 
     func pause() {
+        cancelCountdown()
         state = .paused
         timerTask?.cancel()
         timerTask = nil
@@ -78,10 +84,13 @@ final class WaveSession: ObservableObject {
         lastSentBPM = 60
         timeSinceLastUpdate = Self.updateInterval
         state = .running
-        startTimer()
+        startCountdown { [weak self] in
+            self?.startTimer()
+        }
     }
 
     func cancel() {
+        cancelCountdown()
         timerTask?.cancel()
         timerTask = nil
         state = .idle
@@ -90,6 +99,30 @@ final class WaveSession: ObservableObject {
     }
 
     // MARK: - Private
+
+    private func startCountdown(then completion: @escaping () -> Void) {
+        cancelCountdown()
+        countdownSeconds = Self.countdownDuration
+
+        countdownTask = Task { [weak self] in
+            for remaining in stride(from: Self.countdownDuration - 1, through: 0, by: -1) {
+                try? await Task.sleep(for: .seconds(1))
+                guard !Task.isCancelled, let self else { return }
+                if remaining > 0 {
+                    self.countdownSeconds = remaining
+                } else {
+                    self.countdownSeconds = nil
+                    completion()
+                }
+            }
+        }
+    }
+
+    private func cancelCountdown() {
+        countdownTask?.cancel()
+        countdownTask = nil
+        countdownSeconds = nil
+    }
 
     private func startTimer() {
         timerTask = Task { [weak self] in

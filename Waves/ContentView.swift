@@ -1,4 +1,5 @@
 import SwiftUI
+import UserNotifications
 
 enum AppMode: String, CaseIterable {
     case wave = "Wave"
@@ -75,6 +76,7 @@ struct ContentView: View {
         .onChange(of: focusGuard.isViolating) { _, violating in
             if violating && waveSession.state == .running {
                 audioPlayer.fadeOut(over: 10)
+                sendRefocusNotification()
             } else if !violating {
                 audioPlayer.cancelFade()
             }
@@ -339,6 +341,7 @@ struct ContentView: View {
             brightness: initial.brightness
         )
         audioPlayer.start()
+        audioPlayer.fadeIn(over: 5)
         await service.play()
         isStreaming = true
         waveSession.start()
@@ -404,6 +407,7 @@ struct ContentView: View {
         )
         await service.resetContext()
         audioPlayer.resume()
+        audioPlayer.fadeIn(over: 5)
         await service.play()
         isStreaming = true
     }
@@ -419,6 +423,22 @@ struct ContentView: View {
         service.disconnect()
         connectionState = .disconnected
     }
+
+    #if os(macOS)
+    private func sendRefocusNotification() {
+        let content = UNMutableNotificationContent()
+        content.title = "Waves"
+        content.body = "Take a deep breath, listen in, and refocus."
+        content.sound = .default
+
+        let request = UNNotificationRequest(
+            identifier: "refocus-\(UUID().uuidString)",
+            content: content,
+            trigger: UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        )
+        UNUserNotificationCenter.current().add(request)
+    }
+    #endif
 
     // MARK: - Free Play Actions
 
