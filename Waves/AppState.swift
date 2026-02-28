@@ -86,6 +86,12 @@ final class AppState: ObservableObject {
         isStreaming = true
     }
 
+    func applyRoutedPrompt(_ newPrompt: String) async {
+        prompt = newPrompt
+        guard isStreaming, connectionState == .connected else { return }
+        await lyriaService.setPrompts([(text: newPrompt, weight: 1.0)])
+    }
+
     func pauseMusic() async {
         await lyriaService.pause()
         audioPlayer.pause()
