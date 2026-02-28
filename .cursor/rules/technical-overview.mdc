@@ -1,0 +1,222 @@
+Technical Overview (P0 – Frontend-Heavy, No Long-Term Memory)
+1️⃣ Core Components
+A. macOS Desktop App (SwiftUI recommended)
+
+Responsible for:
+
+Screenshot sampling
+
+Voice input (optional)
+
+Calling Gemini + Lyria APIs
+
+Streaming / generating music
+
+Simple UI (state indicator + timer)
+
+Electron is possible, but SwiftUI is cleaner for:
+
+Screen capture permissions
+
+Background execution
+
+Native performance
+
+2️⃣ Required macOS Permissions
+
+You will need:
+
+🔐 Screen Recording Permission
+
+Required to capture screenshots
+
+User must enable in:
+System Settings → Privacy & Security → Screen Recording
+
+🎙 Microphone Permission (if voice steering enabled)
+
+Required for speech input
+
+🌐 Network Access
+
+To call Gemini + Lyria APIs
+
+No special music permissions required if generating audio yourself.
+
+3️⃣ Screenshot Capture Layer
+
+Use:
+
+ScreenCaptureKit (modern API)
+or
+
+CGWindowListCreateImage (simpler)
+
+Flow:
+
+Capture screen every 10–15 seconds
+
+Downscale image
+
+Convert to JPEG/PNG
+
+Send to Gemini Vision endpoint
+
+4️⃣ AI Layer (Frontend Calling APIs Directly)
+
+For P0, you can call Gemini directly from frontend.
+
+A. Gemini Vision API
+
+Purpose:
+
+Interpret screenshot
+
+Classify activity state
+
+Output example:
+
+{
+  "activity": "deep_work",
+  "focus_score": 0.78,
+  "distraction_score": 0.21,
+  "recommended_energy": 0.35
+}
+
+Prompt includes:
+
+Screenshot
+
+Simple system instructions
+
+No memory state
+
+B. Lyria (Music Generation API)
+
+Input:
+
+Mood
+
+Energy level
+
+Tempo target
+
+Intensity curve
+
+Output:
+
+Generated audio stream
+or
+
+Structured music segments
+
+Your app:
+
+Plays generated audio
+
+Smoothly transitions when state changes
+
+5️⃣ Audio Engine
+
+Options:
+
+Option A (Preferred for AI-native demo):
+
+Use Lyria-generated audio directly.
+
+You’ll need:
+
+AVAudioEngine (Swift)
+
+Audio buffer streaming
+
+Fade in/out transitions
+
+Option B:
+
+Use Spotify SDK and switch tracks.
+(Easier but less impressive technically.)
+
+6️⃣ Voice Steering (Optional but Feasible)
+
+Use:
+
+macOS Speech framework
+
+AVAudioEngine for capture
+
+Flow:
+
+Capture speech
+
+Convert to text locally
+
+Send text to Gemini
+
+Receive updated music intent
+
+Example:
+User says “More cinematic.”
+Gemini updates energy + orchestration style.
+
+7️⃣ Real-Time Loop Architecture
+
+Every ~10–15 seconds:
+
+Capture screenshot
+
+Send to Gemini Vision
+
+Receive structured activity state
+
+Convert to Lyria music parameters
+
+Update music gradually
+
+This is not true real-time audio modulation — it’s state-based adaptation.
+
+Latency tolerance:
+3–5 seconds is acceptable.
+
+8️⃣ No Backend (P0 Mode)
+
+You can do everything client-side:
+
+Gemini API calls
+
+Lyria calls
+
+No DB
+
+No user modeling
+
+⚠️ Caveat:
+API keys must be secured before production.
+For hackathon, frontend use is acceptable.
+
+Summary of Required APIs & Frameworks
+macOS
+
+ScreenCaptureKit
+
+AVAudioEngine
+
+Speech framework
+
+SwiftUI (UI)
+
+AI
+
+Gemini Vision API
+
+Gemini text reasoning (optional)
+
+Lyria music generation API
+
+Permissions
+
+Screen Recording
+
+Microphone (optional)
+
+Internet access
