@@ -94,7 +94,7 @@ struct GeminiService {
         - "linkedin" -> "linkedin.com" (app_name: "LinkedIn")
         - "slack" -> "slack.com" (app_name: "Slack")
         - "discord" -> "discord.com" (app_name: "Discord")
-        - For other sites, append ".com" if no TLD is provided.
+        - For other sites, use your best judgment to determine the domain.
         - Only set app_name if the service is commonly used as a native macOS/iOS app.
         """
     }
