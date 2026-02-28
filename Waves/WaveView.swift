@@ -3,7 +3,6 @@ import SwiftUI
 struct WaveView: View {
     @ObservedObject var session: WaveSession
 
-    let apiKeyIsEmpty: Bool
     let isConnecting: Bool
     var isViolating = false
     var violationSeconds = 0
@@ -23,8 +22,11 @@ struct WaveView: View {
         ("60m", 60 * 60),
     ]
 
+    private let circleSize: CGFloat = 280
+    private let strokeWidth: CGFloat = 10
+
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 20) {
             switch session.state {
             case .idle:
                 idleView
@@ -39,106 +41,73 @@ struct WaveView: View {
     // MARK: - Idle
 
     private var idleView: some View {
-        VStack(spacing: 20) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Duration")
-                    .font(.headline)
+        VStack(spacing: 28) {
+            ZStack {
+                Circle()
+                    .stroke(Color.secondary.opacity(0.08), lineWidth: strokeWidth)
 
-                HStack(spacing: 8) {
-                    ForEach(Self.presets, id: \.seconds) { preset in
-                        Button(preset.label) {
-                            session.duration = preset.seconds
-                        }
-                        .buttonStyle(.bordered)
-                        .tint(session.duration == preset.seconds ? .accentColor : .secondary)
-                    }
+                Text(formattedDuration(session.duration))
+                    .font(.system(size: 44, weight: .light, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(.primary)
+            }
+            .frame(width: circleSize, height: circleSize)
+
+            HStack(spacing: 8) {
+                ForEach(Self.presets, id: \.seconds) { preset in
+                    presetButton(preset: preset)
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
 
             Button {
                 onStart()
             } label: {
-                Label("Start Wave", systemImage: "water.waves")
+                Text("Start Wave")
+                    .font(.body.weight(.semibold))
                     .frame(maxWidth: .infinity)
+                    .padding(.vertical, 2)
             }
             .controlSize(.large)
             .buttonStyle(.borderedProminent)
-            .disabled(apiKeyIsEmpty || isConnecting)
+            .disabled(isConnecting)
         }
     }
 
     // MARK: - Running
 
     private var runningView: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 24) {
             ZStack {
-                // Background track
                 Circle()
-                    .stroke(Color.secondary.opacity(0.15), lineWidth: 8)
+                    .stroke(intensityColor.opacity(0.1), lineWidth: strokeWidth)
 
-                // Progress arc
                 Circle()
                     .trim(from: 0, to: session.progress)
                     .stroke(
                         intensityGradient,
-                        style: StrokeStyle(lineWidth: 8, lineCap: .round)
+                        style: StrokeStyle(lineWidth: strokeWidth, lineCap: .round)
                     )
                     .rotationEffect(.degrees(-90))
                     .animation(.linear(duration: 1), value: session.progress)
 
-                // Center content
-                VStack(spacing: 4) {
-                    if isSuspended {
-                        Image(systemName: "pause.circle.fill")
-                            .font(.system(size: 28))
-                            .foregroundStyle(.orange)
-
-                        Text("Wave Reset")
-                            .font(.system(size: 15, weight: .semibold, design: .rounded))
-                            .foregroundStyle(.orange)
-
-                        Text("Return to focus\nto continue")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                    } else if isViolating {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.system(size: 28))
-                            .foregroundStyle(.red)
-
-                        Text("Refocus in \(10 - violationSeconds)s")
-                            .font(.system(size: 15, weight: .semibold, design: .rounded))
-                            .foregroundStyle(.red)
-                            .contentTransition(.numericText())
-                    } else {
-                        Text(formattedRemaining)
-                            .font(.system(size: 36, weight: .medium, design: .rounded))
-                            .monospacedDigit()
-                            .contentTransition(.numericText())
-
-                        Text("\(Int(session.intensity * 100))% intensity")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
+                centerContent
             }
-            .frame(width: 180, height: 180)
-            .padding(.vertical, 4)
+            .frame(width: circleSize, height: circleSize)
+            .shadow(color: intensityColor.opacity(0.3), radius: 24)
+            .animation(.easeInOut(duration: 2), value: session.intensity)
             .overlay {
                 if isSuspended {
                     Circle()
-                        .stroke(Color.orange.opacity(0.4), lineWidth: 8)
-                        .frame(width: 180, height: 180)
+                        .stroke(Color.orange.opacity(0.3), lineWidth: strokeWidth)
+                        .frame(width: circleSize, height: circleSize)
                 } else if isViolating {
                     Circle()
-                        .stroke(Color.red.opacity(0.4), lineWidth: 8)
-                        .frame(width: 180, height: 180)
+                        .stroke(Color.red.opacity(0.3), lineWidth: strokeWidth)
+                        .frame(width: circleSize, height: circleSize)
                 }
             }
 
-            // BPM indicator
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
                 parameterPill(label: "BPM", value: "\(session.currentParameters.bpm)")
                 parameterPill(
                     label: "Density",
@@ -150,14 +119,15 @@ struct WaveView: View {
                 )
             }
 
-            // Transport
-            HStack(spacing: 16) {
+            HStack(spacing: 12) {
                 if session.state == .paused {
                     Button {
                         onResume()
                     } label: {
-                        Label("Resume", systemImage: "play.fill")
+                        Image(systemName: "play.fill")
+                            .font(.title3)
                             .frame(maxWidth: .infinity)
+                            .padding(.vertical, 4)
                     }
                     .controlSize(.large)
                     .buttonStyle(.borderedProminent)
@@ -165,8 +135,10 @@ struct WaveView: View {
                     Button {
                         onPause()
                     } label: {
-                        Label("Pause", systemImage: "pause.fill")
+                        Image(systemName: "pause.fill")
+                            .font(.title3)
                             .frame(maxWidth: .infinity)
+                            .padding(.vertical, 4)
                     }
                     .controlSize(.large)
                     .buttonStyle(.bordered)
@@ -175,8 +147,10 @@ struct WaveView: View {
                 Button {
                     onCancel()
                 } label: {
-                    Label("Cancel", systemImage: "xmark")
+                    Image(systemName: "xmark")
+                        .font(.title3)
                         .frame(maxWidth: .infinity)
+                        .padding(.vertical, 4)
                 }
                 .controlSize(.large)
                 .buttonStyle(.bordered)
@@ -185,26 +159,71 @@ struct WaveView: View {
         }
     }
 
+    @ViewBuilder
+    private var centerContent: some View {
+        if isSuspended {
+            VStack(spacing: 6) {
+                Image(systemName: "pause.circle.fill")
+                    .font(.system(size: 32))
+                    .foregroundStyle(.orange)
+
+                Text("Wave Reset")
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.orange)
+
+                Text("Return to focus\nto continue")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+        } else if isViolating {
+            VStack(spacing: 6) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 32))
+                    .foregroundStyle(.red)
+
+                Text("Refocus in \(10 - violationSeconds)s")
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.red)
+                    .contentTransition(.numericText())
+            }
+        } else {
+            Text(formattedRemaining)
+                .font(.system(size: 42, weight: .light, design: .rounded))
+                .monospacedDigit()
+                .contentTransition(.numericText())
+        }
+    }
+
     // MARK: - Completed
 
     private var completedView: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 48))
-                .foregroundStyle(.green)
+        VStack(spacing: 20) {
+            ZStack {
+                Circle()
+                    .stroke(Color.green.opacity(0.12), lineWidth: strokeWidth)
+
+                Image(systemName: "checkmark")
+                    .font(.system(size: 52, weight: .light))
+                    .foregroundStyle(.green)
+            }
+            .frame(width: circleSize, height: circleSize)
+            .shadow(color: .green.opacity(0.2), radius: 20)
 
             Text("Wave Complete")
-                .font(.title2.bold())
+                .font(.title3.weight(.semibold))
 
             Text("You focused for \(formattedDuration(session.duration))")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
             Button {
-                session.cancel() // resets to idle
+                session.cancel()
             } label: {
-                Label("Start Another", systemImage: "arrow.counterclockwise")
+                Text("Start Another")
+                    .font(.body.weight(.semibold))
                     .frame(maxWidth: .infinity)
+                    .padding(.vertical, 2)
             }
             .controlSize(.large)
             .buttonStyle(.borderedProminent)
@@ -216,35 +235,75 @@ struct WaveView: View {
 
     private var intensityColor: Color {
         let t = session.intensity
-        let r: Double = 0.2 * (1 - t) + 1.0 * t
-        let g: Double = 0.5 * (1 - t) + 0.6 * t
-        let b: Double = 1.0 * (1 - t) + 0.2 * t
-        return Color(red: r, green: g, blue: b)
+        let hue: Double
+        let saturation: Double
+        let brightness: Double
+
+        if t <= 0.5 {
+            let p = t / 0.5
+            hue = 0.55 + p * (0.75 - 0.55)
+            saturation = 0.6 + p * (0.7 - 0.6)
+            brightness = 0.9 + p * (0.85 - 0.9)
+        } else {
+            let p = (t - 0.5) / 0.5
+            hue = 0.75 + p * (1.05 - 0.75)
+            saturation = 0.7 + p * (0.8 - 0.7)
+            brightness = 0.85 + p * (1.0 - 0.85)
+        }
+
+        return Color(hue: hue.truncatingRemainder(dividingBy: 1.0), saturation: saturation, brightness: brightness)
     }
 
     private var intensityGradient: AngularGradient {
         let c = intensityColor
         return AngularGradient(
-            colors: [c.opacity(0.6), c],
+            colors: [c.opacity(0.4), c.opacity(0.7), c],
             center: .center,
             startAngle: .degrees(-90),
             endAngle: .degrees(-90 + 360 * session.progress)
         )
     }
 
+    @ViewBuilder
+    private func presetButton(preset: (label: String, seconds: TimeInterval)) -> some View {
+        if session.duration == preset.seconds {
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    session.duration = preset.seconds
+                }
+            } label: {
+                Text(preset.label)
+                    .font(.subheadline.weight(.medium))
+            }
+            .controlSize(.small)
+            .buttonStyle(.borderedProminent)
+        } else {
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    session.duration = preset.seconds
+                }
+            } label: {
+                Text(preset.label)
+                    .font(.subheadline.weight(.medium))
+            }
+            .controlSize(.small)
+            .buttonStyle(.bordered)
+        }
+    }
+
     private func parameterPill(label: String, value: String) -> some View {
         VStack(spacing: 2) {
             Text(value)
-                .font(.subheadline.bold())
+                .font(.caption.bold())
                 .monospacedDigit()
                 .contentTransition(.numericText())
             Text(label)
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.tertiary)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 6)
-        .background(.fill.tertiary, in: RoundedRectangle(cornerRadius: 8))
+        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
     }
 
     private var formattedRemaining: String {

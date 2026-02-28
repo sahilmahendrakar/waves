@@ -1,9 +1,85 @@
-#if os(macOS)
 import SwiftUI
 
-struct BlocklistSettingsView: View {
+struct SettingsView: View {
+    @Binding var apiKey: String
+    #if os(macOS)
     @ObservedObject var focusGuard: FocusGuard
+    #endif
+    @AppStorage("appMode") private var mode: AppMode = .wave
     @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(spacing: 0) {
+            header
+            Divider()
+            #if os(macOS)
+            TabView {
+                generalTab
+                    .tabItem { Label("General", systemImage: "gearshape") }
+                FocusGuardSettingsTab(focusGuard: focusGuard)
+                    .tabItem { Label("Focus Guard", systemImage: "eye.slash") }
+            }
+            #else
+            generalTab
+            #endif
+        }
+        .frame(minWidth: 440, minHeight: 500)
+    }
+
+    // MARK: - Header
+
+    private var header: some View {
+        HStack {
+            Text("Settings")
+                .font(.headline)
+            Spacer()
+            Button("Done") { dismiss() }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+        }
+        .padding(16)
+    }
+
+    // MARK: - General Tab
+
+    private var generalTab: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Mode")
+                        .font(.subheadline.bold())
+                    Picker("Mode", selection: $mode) {
+                        ForEach(AppMode.allCases, id: \.self) { m in
+                            Text(m.rawValue).tag(m)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    Text("Wave adapts music intensity over time. Free Play gives you manual control.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("API Key")
+                        .font(.subheadline.bold())
+                    SecureField("Gemini API Key", text: $apiKey)
+                        .textFieldStyle(.roundedBorder)
+                    Text("Enter your Gemini API key to connect to Lyria RealTime.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+}
+
+// MARK: - Focus Guard Tab (macOS)
+
+#if os(macOS)
+private struct FocusGuardSettingsTab: View {
+    @ObservedObject var focusGuard: FocusGuard
 
     @State private var newApp = ""
     @State private var newDomain = ""
@@ -13,40 +89,16 @@ struct BlocklistSettingsView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            header
-            Divider()
-            ScrollView {
-                VStack(spacing: 20) {
-                    modePicker
-                    appsSection
-                    Divider()
-                    domainsSection
-                    resetButton
-                }
-                .padding(20)
+        ScrollView {
+            VStack(spacing: 20) {
+                modePicker
+                appsSection
+                Divider()
+                domainsSection
+                resetButton
             }
+            .padding(20)
         }
-        .frame(minWidth: 400, minHeight: 480)
-    }
-
-    // MARK: - Header
-
-    private var header: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Focus Guard")
-                    .font(.headline)
-                Text("Manage which apps & websites break your focus")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            Button("Done") { dismiss() }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
-        }
-        .padding(16)
     }
 
     // MARK: - Mode picker
@@ -101,7 +153,7 @@ struct BlocklistSettingsView: View {
             }
 
             HStack(spacing: 8) {
-                TextField("App name…", text: $newApp)
+                TextField("App name\u{2026}", text: $newApp)
                     .textFieldStyle(.roundedBorder)
                     .onSubmit { addApp() }
                 Button("Add") { addApp() }
@@ -134,7 +186,7 @@ struct BlocklistSettingsView: View {
             }
 
             HStack(spacing: 8) {
-                TextField("Domain (e.g. reddit.com)…", text: $newDomain)
+                TextField("Domain (e.g. reddit.com)\u{2026}", text: $newDomain)
                     .textFieldStyle(.roundedBorder)
                     .onSubmit { addDomain() }
                 Button("Add") { addDomain() }
@@ -171,11 +223,9 @@ struct BlocklistSettingsView: View {
             .replacingOccurrences(of: "https://", with: "")
             .replacingOccurrences(of: "http://", with: "")
 
-        // Strip leading www. for consistency
         if domain.hasPrefix("www.") {
             domain = String(domain.dropFirst(4))
         }
-        // Strip trailing slash
         if domain.hasSuffix("/") {
             domain = String(domain.dropLast())
         }

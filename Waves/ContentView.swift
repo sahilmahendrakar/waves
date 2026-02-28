@@ -1,6 +1,6 @@
 import SwiftUI
 
-private enum AppMode: String, CaseIterable {
+enum AppMode: String, CaseIterable {
     case wave = "Wave"
     case freePlay = "Free Play"
 }
@@ -12,11 +12,11 @@ struct ContentView: View {
     #if os(macOS)
     @StateObject private var appMonitor = ActiveAppMonitor()
     @StateObject private var focusGuard = FocusGuard()
-    @State private var showingBlocklistSettings = false
     #endif
     @State private var lyriaService: LyriaService?
+    @State private var showingSettings = false
 
-    @State private var mode: AppMode = .wave
+    @AppStorage("appMode") private var mode: AppMode = .wave
     @State private var prompt = "minimal techno with deep bass"
     @State private var bpm: Double = 120
     @State private var isStreaming = false
@@ -26,13 +26,31 @@ struct ContentView: View {
     private static let intensePrompt = "energetic driving fast-paced intense electronic"
 
     var body: some View {
-        VStack(spacing: 0) {
-            headerView
-            Divider()
-            controlsView
-                .padding(24)
+        ZStack {
+            mainContent
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            VStack {
+                HStack {
+                    Spacer()
+                    Button {
+                        showingSettings = true
+                    } label: {
+                        Image(systemName: "gearshape")
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 20)
+                .padding(.top, 14)
+
+                Spacer()
+
+                footerBar
+            }
         }
-        .frame(minWidth: 480, minHeight: 480)
+        .frame(minWidth: 480, minHeight: 540)
         .onAppear {
             let service = LyriaService(audioPlayer: audioPlayer)
             lyriaService = service
@@ -60,98 +78,70 @@ struct ContentView: View {
                 audioPlayer.cancelFade()
             }
         }
-        .sheet(isPresented: $showingBlocklistSettings) {
-            BlocklistSettingsView(focusGuard: focusGuard)
-        }
         #endif
+        .sheet(isPresented: $showingSettings) {
+            #if os(macOS)
+            SettingsView(apiKey: $apiKey, focusGuard: focusGuard)
+            #else
+            SettingsView(apiKey: $apiKey)
+            #endif
+        }
     }
 
-    // MARK: - Header
+    // MARK: - Main Content
 
-    private var headerView: some View {
-        VStack(spacing: 4) {
-            Image(systemName: "waveform.circle.fill")
-                .font(.system(size: 48))
-                .foregroundStyle(.tint)
-                .symbolEffect(.pulse, isActive: isStreaming)
+    private var mainContent: some View {
+        VStack(spacing: 0) {
+            Spacer(minLength: 12)
 
-            Text("Waves")
-                .font(.title.bold())
-            Text("Lyria RealTime Music")
+            if apiKey.isEmpty {
+                apiKeyMissingView
+            } else {
+                switch mode {
+                case .wave:
+                    waveControls
+                case .freePlay:
+                    freePlayControls
+                }
+            }
+
+            Spacer(minLength: 12)
+        }
+        .padding(.horizontal, 24)
+    }
+
+    // MARK: - API Key Missing
+
+    private var apiKeyMissingView: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "key.fill")
+                .font(.system(size: 36))
+                .foregroundStyle(.tertiary)
+
+            Text("API Key Required")
+                .font(.headline)
+
+            Text("Add your Gemini API key in Settings to get started.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
 
-            #if os(macOS)
-            HStack(spacing: 6) {
-                if let icon = appMonitor.appIcon {
-                    Image(nsImage: icon)
-                        .resizable()
-                        .frame(width: 16, height: 16)
-                }
-                Text(appMonitor.appName)
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-                if let url = appMonitor.activeURL,
-                   let host = URL(string: url)?.host {
-                    Text("\u{2014}")
-                        .font(.caption)
-                        .foregroundStyle(.quaternary)
-                    Text(host)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                        .lineLimit(1)
-                }
-            }
-            .padding(.top, 4)
-            #endif
-        }
-        .padding(.vertical, 20)
-        .frame(maxWidth: .infinity)
-        .overlay(alignment: .topTrailing) {
-            #if os(macOS)
             Button {
-                showingBlocklistSettings = true
+                showingSettings = true
             } label: {
-                Image(systemName: "gearshape")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
+                Label("Open Settings", systemImage: "gearshape")
             }
-            .buttonStyle(.plain)
-            .padding(16)
-            #endif
+            .buttonStyle(.borderedProminent)
+            .controlSize(.regular)
+            .padding(.top, 4)
         }
     }
 
-    // MARK: - Controls
-
-    private var controlsView: some View {
-        VStack(spacing: 20) {
-            apiKeyField
-
-            Picker("Mode", selection: $mode) {
-                ForEach(AppMode.allCases, id: \.self) { m in
-                    Text(m.rawValue).tag(m)
-                }
-            }
-            .pickerStyle(.segmented)
-
-            switch mode {
-            case .wave:
-                waveControls
-            case .freePlay:
-                freePlayControls
-            }
-
-            statusBadge
-        }
-    }
-
-    // MARK: - Wave mode
+    // MARK: - Wave Mode
 
     private var waveControls: some View {
         WaveView(
             session: waveSession,
-            apiKeyIsEmpty: apiKey.isEmpty,
             isConnecting: connectionState == .connecting,
             isViolating: isFocusViolating,
             violationSeconds: focusViolationSeconds,
@@ -187,13 +177,14 @@ struct ContentView: View {
         #endif
     }
 
-    // MARK: - Free Play mode
+    // MARK: - Free Play Mode
 
     private var freePlayControls: some View {
         VStack(spacing: 20) {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Prompt")
-                    .font(.headline)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
                 TextField("Describe the music...", text: $prompt)
                     .textFieldStyle(.roundedBorder)
             }
@@ -201,11 +192,12 @@ struct ContentView: View {
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
                     Text("BPM")
-                        .font(.headline)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                     Spacer()
                     Text("\(Int(bpm))")
+                        .font(.subheadline.monospacedDigit())
                         .foregroundStyle(.secondary)
-                        .monospacedDigit()
                 }
                 Slider(value: $bpm, in: 60...200, step: 1)
             }
@@ -214,29 +206,8 @@ struct ContentView: View {
         }
     }
 
-    private var apiKeyField: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("API Key")
-                .font(.headline)
-            SecureField("Gemini API Key", text: $apiKey)
-                .textFieldStyle(.roundedBorder)
-        }
-    }
-
-    private var statusBadge: some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(statusColor)
-                .frame(width: 8, height: 8)
-            Text(statusText)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
     private var transportControls: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 12) {
             if isStreaming {
                 Button {
                     Task { await pauseMusic() }
@@ -265,12 +236,44 @@ struct ContentView: View {
                 }
                 .controlSize(.large)
                 .buttonStyle(.borderedProminent)
-                .disabled(apiKey.isEmpty || prompt.isEmpty || connectionState == .connecting)
+                .disabled(prompt.isEmpty || connectionState == .connecting)
             }
         }
     }
 
-    // MARK: - Status helpers
+    // MARK: - Footer Bar
+
+    private var footerBar: some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(statusColor)
+                .frame(width: 6, height: 6)
+            Text(statusText)
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+
+            Spacer()
+
+            #if os(macOS)
+            if !appMonitor.appName.isEmpty {
+                HStack(spacing: 4) {
+                    if let icon = appMonitor.appIcon {
+                        Image(nsImage: icon)
+                            .resizable()
+                            .frame(width: 12, height: 12)
+                    }
+                    Text(appMonitor.appName)
+                        .font(.caption2)
+                        .foregroundStyle(.quaternary)
+                }
+            }
+            #endif
+        }
+        .padding(.horizontal, 20)
+        .padding(.bottom, 10)
+    }
+
+    // MARK: - Status Helpers
 
     private var statusColor: Color {
         switch connectionState {
@@ -284,13 +287,13 @@ struct ContentView: View {
     private var statusText: String {
         switch connectionState {
         case .disconnected: "Disconnected"
-        case .connecting: "Connecting..."
+        case .connecting: "Connecting\u{2026}"
         case .connected: isStreaming ? "Streaming" : "Connected"
         case .error(let msg): "Error: \(msg)"
         }
     }
 
-    // MARK: - Wave actions
+    // MARK: - Wave Actions
 
     private func setupWaveCallbacks(service: LyriaService) {
         waveSession.onParametersChanged = { params, bpmChanged in
@@ -413,7 +416,7 @@ struct ContentView: View {
         connectionState = .disconnected
     }
 
-    // MARK: - Free Play actions
+    // MARK: - Free Play Actions
 
     private func startMusic() async {
         guard let service = lyriaService else { return }
