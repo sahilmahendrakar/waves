@@ -2,10 +2,12 @@ import SwiftUI
 
 struct SettingsView: View {
     @Binding var apiKey: String
+    @EnvironmentObject var appState: AppState
     #if os(macOS)
     @ObservedObject var focusGuard: FocusGuard
     #endif
     @AppStorage("appMode") private var mode: AppMode = .wave
+    @State private var showingMusicPreferences = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -68,10 +70,152 @@ struct SettingsView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Music Preferences")
+                        .font(.subheadline.bold())
+
+                    if let prefs = MusicPreferences.load() {
+                        HStack(spacing: 6) {
+                            ForEach(prefs.selectedGenres, id: \.self) { genre in
+                                Text(genre)
+                                    .font(.caption)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color.accentColor.opacity(0.15))
+                                    .clipShape(Capsule())
+                            }
+                        }
+
+                        Text(prefs.selectedMood)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Button {
+                        showingMusicPreferences = true
+                    } label: {
+                        Label("Edit Preferences", systemImage: "music.note.list")
+                    }
+                    .controlSize(.small)
+                }
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .sheet(isPresented: $showingMusicPreferences) {
+            MusicPreferencesEditor(appState: appState)
+        }
+    }
+}
+
+struct MusicPreferencesEditor: View {
+    let appState: AppState
+    @Environment(\.dismiss) private var dismiss
+    @State private var selectedGenres: Set<String>
+    @State private var selectedMood: String
+
+    init(appState: AppState) {
+        self.appState = appState
+        let prefs = MusicPreferences.load() ?? .default
+        self._selectedGenres = State(initialValue: Set(prefs.selectedGenres))
+        self._selectedMood = State(initialValue: prefs.selectedMood)
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text("Music Preferences")
+                    .font(.headline)
+                Spacer()
+                Button("Cancel") { dismiss() }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                Button("Save") { save() }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+                    .disabled(selectedGenres.isEmpty || selectedMood.isEmpty)
+            }
+            .padding(16)
+
+            Divider()
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Genres")
+                            .font(.subheadline.bold())
+
+                        FlowLayout(spacing: 10) {
+                            ForEach(MusicPreferences.availableGenres, id: \.self) { genre in
+                                Button {
+                                    toggleGenre(genre)
+                                } label: {
+                                    Text(genre)
+                                        .font(.subheadline.weight(.medium))
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, 8)
+                                        .background(selectedGenres.contains(genre) ? Color.accentColor : Color.secondary.opacity(0.12))
+                                        .foregroundStyle(selectedGenres.contains(genre) ? .white : .primary)
+                                        .clipShape(Capsule())
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Mood")
+                            .font(.subheadline.bold())
+
+                        ForEach(MusicPreferences.availableMoods, id: \.self) { mood in
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    selectedMood = mood
+                                }
+                            } label: {
+                                HStack {
+                                    Text(mood)
+                                        .font(.body)
+                                    Spacer()
+                                    if selectedMood == mood {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundStyle(.tint)
+                                    }
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 10)
+                                .background(selectedMood == mood ? Color.accentColor.opacity(0.1) : Color.secondary.opacity(0.06))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+                .padding(20)
+            }
+        }
+        .frame(minWidth: 400, minHeight: 400)
+    }
+
+    private func toggleGenre(_ genre: String) {
+        withAnimation(.easeInOut(duration: 0.2)) {
+            if selectedGenres.contains(genre) {
+                selectedGenres.remove(genre)
+            } else {
+                selectedGenres.insert(genre)
+            }
+        }
+    }
+
+    private func save() {
+        let prefs = MusicPreferences(
+            selectedGenres: Array(selectedGenres),
+            selectedMood: selectedMood
+        )
+        prefs.save()
+        appState.applyPreferences(prefs)
+        dismiss()
     }
 }
 

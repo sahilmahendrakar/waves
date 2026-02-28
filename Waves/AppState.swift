@@ -9,7 +9,7 @@ final class AppState: ObservableObject {
     let waveSession = WaveSession()
     private let pingPlayer = PingPlayer()
 
-    @Published var prompt = "minimal techno with deep bass"
+    @Published var prompt: String
     @Published var bpm: Double = 120
     @Published var isStreaming = false
     @Published var connectionState: LyriaConnectionState = .disconnected
@@ -17,8 +17,8 @@ final class AppState: ObservableObject {
     private var userSteeringPrompt: String?
     private var cancellables = Set<AnyCancellable>()
 
-    static let calmPrompt = "ambient ethereal spacey synth pads chill"
-    static let intensePrompt = "energetic driving fast-paced intense electronic"
+    private(set) var calmPrompt: String
+    private(set) var intensePrompt: String
 
     var apiKey: String {
         UserDefaults.standard.string(forKey: "geminiAPIKey") ?? ""
@@ -28,6 +28,11 @@ final class AppState: ObservableObject {
         let player = AudioPlayer()
         self.audioPlayer = player
         self.lyriaService = LyriaService(audioPlayer: player)
+
+        let prefs = MusicPreferences.load() ?? .default
+        self.calmPrompt = prefs.calmPrompt
+        self.intensePrompt = prefs.intensePrompt
+        self._prompt = Published(initialValue: prefs.defaultPrompt)
 
         lyriaService.$connectionState
             .assign(to: &$connectionState)
@@ -47,8 +52,8 @@ final class AppState: ObservableObject {
                 guard let self else { return }
                 if self.userSteeringPrompt == nil {
                     await self.lyriaService.setPrompts([
-                        (text: Self.calmPrompt, weight: params.calmWeight),
-                        (text: Self.intensePrompt, weight: params.intenseWeight),
+                        (text: self.calmPrompt, weight: params.calmWeight),
+                        (text: self.intensePrompt, weight: params.intenseWeight),
                     ])
                 }
                 await self.lyriaService.setMusicConfig(
@@ -112,8 +117,8 @@ final class AppState: ObservableObject {
 
         let initial = waveSession.currentParameters
         await lyriaService.setPrompts([
-            (text: Self.calmPrompt, weight: initial.calmWeight),
-            (text: Self.intensePrompt, weight: initial.intenseWeight),
+            (text: calmPrompt, weight: initial.calmWeight),
+            (text: intensePrompt, weight: initial.intenseWeight),
         ])
         await lyriaService.setMusicConfig(
             bpm: initial.bpm,
@@ -163,8 +168,8 @@ final class AppState: ObservableObject {
         waveSession.restart()
         let initial = waveSession.currentParameters
         await lyriaService.setPrompts([
-            (text: Self.calmPrompt, weight: initial.calmWeight),
-            (text: Self.intensePrompt, weight: initial.intenseWeight),
+            (text: calmPrompt, weight: initial.calmWeight),
+            (text: intensePrompt, weight: initial.intenseWeight),
         ])
         await lyriaService.setMusicConfig(
             bpm: initial.bpm,
@@ -192,5 +197,11 @@ final class AppState: ObservableObject {
         prompt = text
         userSteeringPrompt = text
         await lyriaService.setPrompts([(text: text, weight: 1.0)])
+    }
+
+    func applyPreferences(_ prefs: MusicPreferences) {
+        calmPrompt = prefs.calmPrompt
+        intensePrompt = prefs.intensePrompt
+        prompt = prefs.defaultPrompt
     }
 }
