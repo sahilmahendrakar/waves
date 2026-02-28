@@ -45,6 +45,7 @@ struct ContentView: View {
         .frame(minWidth: 480, minHeight: 540)
         .onAppear {
             #if os(macOS)
+            appState.focusGuard = focusGuard
             focusGuard.attach(to: appMonitor)
             focusGuard.onViolationTriggered = {
                 Task { await appState.suspendWave() }

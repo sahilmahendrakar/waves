@@ -63,6 +63,11 @@ final class FocusGuard: ObservableObject {
         appMonitor = monitor
     }
 
+    func reevaluate() {
+        guard isEnabled, let monitor = appMonitor else { return }
+        evaluate(appName: monitor.appName, activeURL: monitor.activeURL)
+    }
+
     func resetToDefaults() {
         blockedApps = Self.defaultBlockedApps
         blockedDomains = Self.defaultBlockedDomains
