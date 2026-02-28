@@ -11,6 +11,8 @@ struct ContentView: View {
     @StateObject private var waveSession = WaveSession()
     #if os(macOS)
     @StateObject private var appMonitor = ActiveAppMonitor()
+    @StateObject private var focusGuard = FocusGuard()
+    @State private var showingBlocklistSettings = false
     #endif
     @State private var lyriaService: LyriaService?
 
@@ -35,12 +37,23 @@ struct ContentView: View {
             let service = LyriaService(audioPlayer: audioPlayer)
             lyriaService = service
             setupWaveCallbacks(service: service)
+            #if os(macOS)
+            focusGuard.attach(to: appMonitor)
+            focusGuard.onViolationTriggered = {
+                Task { await cancelWave() }
+            }
+            #endif
         }
         .onChange(of: lyriaService?.connectionState) { _, newValue in
             if let newValue {
                 connectionState = newValue
             }
         }
+        #if os(macOS)
+        .sheet(isPresented: $showingBlocklistSettings) {
+            BlocklistSettingsView(focusGuard: focusGuard)
+        }
+        #endif
     }
 
     // MARK: - Header
@@ -84,6 +97,19 @@ struct ContentView: View {
         }
         .padding(.vertical, 20)
         .frame(maxWidth: .infinity)
+        .overlay(alignment: .topTrailing) {
+            #if os(macOS)
+            Button {
+                showingBlocklistSettings = true
+            } label: {
+                Image(systemName: "gearshape")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .padding(16)
+            #endif
+        }
     }
 
     // MARK: - Controls
@@ -117,11 +143,29 @@ struct ContentView: View {
             session: waveSession,
             apiKeyIsEmpty: apiKey.isEmpty,
             isConnecting: connectionState == .connecting,
+            isViolating: isFocusViolating,
+            violationSeconds: focusViolationSeconds,
             onStart: { Task { await startWave() } },
             onPause: { Task { await pauseWave() } },
             onResume: { Task { await resumeWave() } },
             onCancel: { Task { await cancelWave() } }
         )
+    }
+
+    private var isFocusViolating: Bool {
+        #if os(macOS)
+        focusGuard.isViolating
+        #else
+        false
+        #endif
+    }
+
+    private var focusViolationSeconds: Int {
+        #if os(macOS)
+        focusGuard.violationSeconds
+        #else
+        0
+        #endif
     }
 
     // MARK: - Free Play mode
@@ -275,10 +319,16 @@ struct ContentView: View {
         await service.play()
         isStreaming = true
         waveSession.start()
+        #if os(macOS)
+        focusGuard.isEnabled = true
+        #endif
     }
 
     private func pauseWave() async {
         guard let service = lyriaService else { return }
+        #if os(macOS)
+        focusGuard.isEnabled = false
+        #endif
         waveSession.pause()
         await service.pause()
         audioPlayer.pause()
@@ -291,15 +341,24 @@ struct ContentView: View {
         await service.play()
         isStreaming = true
         waveSession.resume()
+        #if os(macOS)
+        focusGuard.isEnabled = true
+        #endif
     }
 
     private func cancelWave() async {
+        #if os(macOS)
+        focusGuard.isEnabled = false
+        #endif
         waveSession.cancel()
         await stopWaveMusic()
     }
 
     private func stopWaveMusic() async {
         guard let service = lyriaService else { return }
+        #if os(macOS)
+        focusGuard.isEnabled = false
+        #endif
         await service.stop()
         audioPlayer.stop()
         isStreaming = false

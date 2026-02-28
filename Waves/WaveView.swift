@@ -5,6 +5,8 @@ struct WaveView: View {
 
     let apiKeyIsEmpty: Bool
     let isConnecting: Bool
+    var isViolating = false
+    var violationSeconds = 0
 
     var onStart: () -> Void
     var onPause: () -> Void
@@ -86,18 +88,36 @@ struct WaveView: View {
 
                 // Center content
                 VStack(spacing: 4) {
-                    Text(formattedRemaining)
-                        .font(.system(size: 36, weight: .medium, design: .rounded))
-                        .monospacedDigit()
-                        .contentTransition(.numericText())
+                    if isViolating {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 28))
+                            .foregroundStyle(.red)
 
-                    Text("\(Int(session.intensity * 100))% intensity")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        Text("Refocus in \(10 - violationSeconds)s")
+                            .font(.system(size: 15, weight: .semibold, design: .rounded))
+                            .foregroundStyle(.red)
+                            .contentTransition(.numericText())
+                    } else {
+                        Text(formattedRemaining)
+                            .font(.system(size: 36, weight: .medium, design: .rounded))
+                            .monospacedDigit()
+                            .contentTransition(.numericText())
+
+                        Text("\(Int(session.intensity * 100))% intensity")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
             .frame(width: 180, height: 180)
             .padding(.vertical, 4)
+            .overlay {
+                if isViolating {
+                    Circle()
+                        .stroke(Color.red.opacity(0.4), lineWidth: 8)
+                        .frame(width: 180, height: 180)
+                }
+            }
 
             // BPM indicator
             HStack(spacing: 12) {
