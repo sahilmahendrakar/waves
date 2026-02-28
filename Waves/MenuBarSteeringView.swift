@@ -31,7 +31,7 @@ struct MenuBarSteeringView: View {
             }
 
             HStack(spacing: 8) {
-                TextField("Steer the music...", text: $steeringText)
+                TextField("Steer music or give a command...", text: $steeringText)
                     .textFieldStyle(.roundedBorder)
                     .onSubmit { submitSteering() }
 
@@ -39,7 +39,7 @@ struct MenuBarSteeringView: View {
                     speechRecognizer: appState.speechRecognizer,
                     steeringText: $steeringText
                 ) { spokenText in
-                    Task { await appState.steerMusic(spokenText) }
+                    Task { await appState.handleSteeringInput(spokenText) }
                 }
 
                 Button(action: submitSteering) {
@@ -49,6 +49,8 @@ struct MenuBarSteeringView: View {
                 .buttonStyle(.borderless)
                 .disabled(!canSteer)
             }
+
+            steeringStatusView
         }
         .padding(16)
         .frame(width: 320)
@@ -56,7 +58,7 @@ struct MenuBarSteeringView: View {
     }
 
     private var canSteer: Bool {
-        appState.isStreaming && !steeringText.isEmpty
+        !steeringText.isEmpty
     }
 
     private func submitSteering() {
@@ -64,7 +66,51 @@ struct MenuBarSteeringView: View {
         let text = steeringText
         steeringText = ""
         Task {
-            await appState.steerMusic(text)
+            await appState.handleSteeringInput(text)
+        }
+    }
+
+    @ViewBuilder
+    private var steeringStatusView: some View {
+        switch appState.steeringStatus {
+        case .idle:
+            EmptyView()
+        case .classifying:
+            HStack(spacing: 6) {
+                ProgressView()
+                    .controlSize(.mini)
+                Text("Thinking...")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+            }
+            .transition(.opacity)
+        case .success(let message):
+            HStack(spacing: 6) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.green)
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                Spacer()
+            }
+            .transition(.opacity)
+        case .error(let message):
+            HStack(spacing: 6) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                Spacer()
+            }
+            .transition(.opacity)
         }
     }
 

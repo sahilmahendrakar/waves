@@ -13,9 +13,15 @@ final class AppState: ObservableObject {
     @Published var bpm: Double = 120
     @Published var isStreaming = false
     @Published var connectionState: LyriaConnectionState = .disconnected
+    @Published var steeringStatus: SteeringStatus = .idle
+
+    #if os(macOS)
+    weak var focusGuard: FocusGuard?
+    #endif
 
     private var userSteeringPrompt: String?
     private var cancellables = Set<AnyCancellable>()
+    private var steeringStatusTask: Task<Void, Never>?
 
     private(set) var calmPrompt: String
     private(set) var intensePrompt: String
@@ -203,6 +209,87 @@ final class AppState: ObservableObject {
             prompts.append((text: steering, weight: 2.0))
         }
         return prompts
+    }
+
+    func handleSteeringInput(_ text: String) async {
+        guard !apiKey.isEmpty else { return }
+
+        steeringStatus = .classifying
+
+        #if os(macOS)
+        let domains = focusGuard?.blockedDomains ?? []
+        let apps = focusGuard?.blockedApps ?? []
+        #else
+        let domains: [String] = []
+        let apps: [String] = []
+        #endif
+
+        let intent: SteeringIntent
+        do {
+            intent = try await GeminiService.classifyIntent(
+                text,
+                apiKey: apiKey,
+                blockedDomains: domains,
+                blockedApps: apps
+            )
+        } catch {
+            print("[Steering] Classification failed: \(error.localizedDescription)")
+            setSteeringStatus(.error(error.localizedDescription))
+            return
+        }
+
+        switch intent {
+        case .steerMusic(let prompt):
+            await steerMusic(prompt)
+            setSteeringStatus(.success("Music: \(prompt)"))
+
+        #if os(macOS)
+        case .block(let domain, let appName):
+            guard let guard_ = focusGuard else { break }
+            var blocked: [String] = []
+            if !domain.isEmpty {
+                if !guard_.blockedDomains.contains(where: { $0.caseInsensitiveCompare(domain) == .orderedSame }) {
+                    guard_.blockedDomains.append(domain)
+                }
+                blocked.append(domain)
+            }
+            if !appName.isEmpty {
+                if !guard_.blockedApps.contains(where: { $0.caseInsensitiveCompare(appName) == .orderedSame }) {
+                    guard_.blockedApps.append(appName)
+                }
+                blocked.append(appName)
+            }
+            guard_.reevaluate()
+            setSteeringStatus(.success("Blocked \(blocked.joined(separator: " & "))"))
+
+        case .unblock(let domain, let appName):
+            guard let guard_ = focusGuard else { break }
+            var unblocked: [String] = []
+            if !domain.isEmpty {
+                guard_.blockedDomains.removeAll { $0.caseInsensitiveCompare(domain) == .orderedSame }
+                unblocked.append(domain)
+            }
+            if !appName.isEmpty {
+                guard_.blockedApps.removeAll { $0.caseInsensitiveCompare(appName) == .orderedSame }
+                unblocked.append(appName)
+            }
+            guard_.reevaluate()
+            setSteeringStatus(.success("Unblocked \(unblocked.joined(separator: " & "))"))
+        #else
+        case .block, .unblock:
+            setSteeringStatus(.error("Focus Guard is only available on macOS"))
+        #endif
+        }
+    }
+
+    private func setSteeringStatus(_ status: SteeringStatus) {
+        steeringStatus = status
+        steeringStatusTask?.cancel()
+        steeringStatusTask = Task {
+            try? await Task.sleep(for: .seconds(3))
+            guard !Task.isCancelled else { return }
+            steeringStatus = .idle
+        }
     }
 
     func applyPreferences(_ prefs: MusicPreferences) {
