@@ -7,6 +7,7 @@ final class AppState: ObservableObject {
     let lyriaService: LyriaService
     let speechRecognizer = SpeechRecognizer()
     let waveSession = WaveSession()
+    private let pingPlayer = PingPlayer()
 
     @Published var prompt = "minimal techno with deep bass"
     @Published var bpm: Double = 120
@@ -120,6 +121,7 @@ final class AppState: ObservableObject {
             brightness: initial.brightness
         )
         audioPlayer.start()
+        audioPlayer.fadeIn(over: 5)
         await lyriaService.play()
         isStreaming = true
         waveSession.start()
@@ -141,6 +143,7 @@ final class AppState: ObservableObject {
 
     func cancelWave() async {
         userSteeringPrompt = nil
+        pingPlayer.stop()
         waveSession.cancel()
         await stopWaveMusic()
     }
@@ -150,10 +153,12 @@ final class AppState: ObservableObject {
         await lyriaService.pause()
         audioPlayer.pause()
         isStreaming = false
+        pingPlayer.start()
     }
 
     func resumeSuspendedWave() async {
         userSteeringPrompt = nil
+        pingPlayer.stop()
         audioPlayer.cancelFade()
         waveSession.restart()
         let initial = waveSession.currentParameters
@@ -168,6 +173,7 @@ final class AppState: ObservableObject {
         )
         await lyriaService.resetContext()
         audioPlayer.resume()
+        audioPlayer.fadeIn(over: 5)
         await lyriaService.play()
         isStreaming = true
     }

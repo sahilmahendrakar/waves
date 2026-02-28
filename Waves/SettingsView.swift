@@ -5,6 +5,7 @@ struct SettingsView: View {
     #if os(macOS)
     @ObservedObject var focusGuard: FocusGuard
     #endif
+    @AppStorage("appMode") private var mode: AppMode = .wave
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -44,6 +45,20 @@ struct SettingsView: View {
     private var generalTab: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Mode")
+                        .font(.subheadline.bold())
+                    Picker("Mode", selection: $mode) {
+                        ForEach(AppMode.allCases, id: \.self) { m in
+                            Text(m.rawValue).tag(m)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    Text("Wave adapts music intensity over time. Free Play gives you manual control.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
                 VStack(alignment: .leading, spacing: 8) {
                     Text("API Key")
                         .font(.subheadline.bold())

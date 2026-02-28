@@ -1,4 +1,10 @@
 import SwiftUI
+import UserNotifications
+
+enum AppMode: String, CaseIterable {
+    case wave = "Wave"
+    case freePlay = "Free Play"
+}
 
 struct ContentView: View {
     @EnvironmentObject var appState: AppState
@@ -8,6 +14,8 @@ struct ContentView: View {
     @StateObject private var focusGuard = FocusGuard()
     #endif
     @State private var showingSettings = false
+
+    @AppStorage("appMode") private var mode: AppMode = .wave
 
     var body: some View {
         ZStack {
@@ -55,6 +63,7 @@ struct ContentView: View {
         .onChange(of: focusGuard.isViolating) { _, violating in
             if violating && appState.waveSession.state == .running {
                 appState.audioPlayer.fadeOut(over: 10)
+                sendRefocusNotification()
             } else if !violating {
                 appState.audioPlayer.cancelFade()
             }
@@ -73,26 +82,20 @@ struct ContentView: View {
         VStack(spacing: 0) {
             Spacer(minLength: 12)
 
-            headerView
-
             if apiKey.isEmpty {
                 apiKeyMissingView
             } else {
-                waveControls
+                switch mode {
+                case .wave:
+                    waveControls
+                case .freePlay:
+                    freePlayControls
+                }
             }
 
             Spacer(minLength: 12)
         }
         .padding(.horizontal, 24)
-    }
-
-    private var headerView: some View {
-        VStack(spacing: 4) {
-            Image(systemName: "waveform.circle.fill")
-                .font(.system(size: 48))
-                .foregroundStyle(.tint)
-                .symbolEffect(.pulse, isActive: appState.isStreaming)
-        }
     }
 
     private var apiKeyMissingView: some View {
@@ -158,6 +161,68 @@ struct ContentView: View {
         #endif
     }
 
+    private var freePlayControls: some View {
+        VStack(spacing: 20) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Prompt")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                TextField("Describe the music...", text: $appState.prompt)
+                    .textFieldStyle(.roundedBorder)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("BPM")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text("\(Int(appState.bpm))")
+                        .font(.subheadline.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+                Slider(value: $appState.bpm, in: 60...200, step: 1)
+            }
+
+            transportControls
+        }
+    }
+
+    private var transportControls: some View {
+        HStack(spacing: 12) {
+            if appState.isStreaming {
+                Button {
+                    Task { await appState.pauseMusic() }
+                } label: {
+                    Label("Pause", systemImage: "pause.fill")
+                        .frame(maxWidth: .infinity)
+                }
+                .controlSize(.large)
+                .buttonStyle(.bordered)
+
+                Button {
+                    Task { await appState.stopMusic() }
+                } label: {
+                    Label("Stop", systemImage: "stop.fill")
+                        .frame(maxWidth: .infinity)
+                }
+                .controlSize(.large)
+                .buttonStyle(.bordered)
+                .tint(.red)
+            } else {
+                Button {
+                    Task { await appState.startMusic() }
+                } label: {
+                    Label("Play", systemImage: "play.fill")
+                        .frame(maxWidth: .infinity)
+                }
+                .controlSize(.large)
+                .buttonStyle(.borderedProminent)
+                .disabled(appState.prompt.isEmpty || appState.connectionState == .connecting)
+            }
+        }
+    }
+
     private var footerBar: some View {
         HStack(spacing: 6) {
             Circle()
@@ -200,7 +265,7 @@ struct ContentView: View {
     private var statusText: String {
         switch appState.connectionState {
         case .disconnected: "Disconnected"
-        case .connecting: "Connecting..."
+        case .connecting: "Connecting\u{2026}"
         case .connected: appState.isStreaming ? "Streaming" : "Connected"
         case .error(let msg): "Error: \(msg)"
         }
@@ -233,6 +298,22 @@ struct ContentView: View {
         #endif
         await appState.cancelWave()
     }
+
+    #if os(macOS)
+    private func sendRefocusNotification() {
+        let content = UNMutableNotificationContent()
+        content.title = "Waves"
+        content.body = "Take a deep breath, listen in, and refocus."
+        content.sound = .default
+
+        let request = UNNotificationRequest(
+            identifier: "refocus-\(UUID().uuidString)",
+            content: content,
+            trigger: UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        )
+        UNUserNotificationCenter.current().add(request)
+    }
+    #endif
 }
 
 #Preview {
