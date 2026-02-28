@@ -1,17 +1,27 @@
 import SwiftUI
 
+private enum AppMode: String, CaseIterable {
+    case wave = "Wave"
+    case freePlay = "Free Play"
+}
+
 struct ContentView: View {
     @AppStorage("geminiAPIKey") private var apiKey = ""
     @StateObject private var audioPlayer = AudioPlayer()
+    @StateObject private var waveSession = WaveSession()
     #if os(macOS)
     @StateObject private var appMonitor = ActiveAppMonitor()
     #endif
     @State private var lyriaService: LyriaService?
 
+    @State private var mode: AppMode = .wave
     @State private var prompt = "minimal techno with deep bass"
     @State private var bpm: Double = 120
     @State private var isStreaming = false
     @State private var connectionState: LyriaConnectionState = .disconnected
+
+    private static let calmPrompt = "ambient ethereal spacey synth pads chill"
+    private static let intensePrompt = "energetic driving fast-paced intense electronic"
 
     var body: some View {
         VStack(spacing: 0) {
@@ -20,10 +30,11 @@ struct ContentView: View {
             controlsView
                 .padding(24)
         }
-        .frame(minWidth: 480, minHeight: 420)
+        .frame(minWidth: 480, minHeight: 480)
         .onAppear {
             let service = LyriaService(audioPlayer: audioPlayer)
             lyriaService = service
+            setupWaveCallbacks(service: service)
         }
         .onChange(of: lyriaService?.connectionState) { _, newValue in
             if let newValue {
@@ -81,6 +92,42 @@ struct ContentView: View {
         VStack(spacing: 20) {
             apiKeyField
 
+            Picker("Mode", selection: $mode) {
+                ForEach(AppMode.allCases, id: \.self) { m in
+                    Text(m.rawValue).tag(m)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            switch mode {
+            case .wave:
+                waveControls
+            case .freePlay:
+                freePlayControls
+            }
+
+            statusBadge
+        }
+    }
+
+    // MARK: - Wave mode
+
+    private var waveControls: some View {
+        WaveView(
+            session: waveSession,
+            apiKeyIsEmpty: apiKey.isEmpty,
+            isConnecting: connectionState == .connecting,
+            onStart: { Task { await startWave() } },
+            onPause: { Task { await pauseWave() } },
+            onResume: { Task { await resumeWave() } },
+            onCancel: { Task { await cancelWave() } }
+        )
+    }
+
+    // MARK: - Free Play mode
+
+    private var freePlayControls: some View {
+        VStack(spacing: 20) {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Prompt")
                     .font(.headline)
@@ -99,8 +146,6 @@ struct ContentView: View {
                 }
                 Slider(value: $bpm, in: 60...200, step: 1)
             }
-
-            statusBadge
 
             transportControls
         }
@@ -182,7 +227,87 @@ struct ContentView: View {
         }
     }
 
-    // MARK: - Actions
+    // MARK: - Wave actions
+
+    private func setupWaveCallbacks(service: LyriaService) {
+        waveSession.onParametersChanged = { params, bpmChanged in
+            Task {
+                await service.setPrompts([
+                    (text: Self.calmPrompt, weight: params.calmWeight),
+                    (text: Self.intensePrompt, weight: params.intenseWeight),
+                ])
+                await service.setMusicConfig(
+                    bpm: bpmChanged ? params.bpm : nil,
+                    density: params.density,
+                    brightness: params.brightness
+                )
+                if bpmChanged {
+                    await service.resetContext()
+                }
+            }
+        }
+
+        waveSession.onWaveCompleted = {
+            Task { await stopWaveMusic() }
+        }
+    }
+
+    private func startWave() async {
+        guard let service = lyriaService else { return }
+
+        if connectionState != .connected {
+            await service.connect(apiKey: apiKey)
+            connectionState = service.connectionState
+            guard connectionState == .connected else { return }
+        }
+
+        let initial = waveSession.currentParameters
+        await service.setPrompts([
+            (text: Self.calmPrompt, weight: initial.calmWeight),
+            (text: Self.intensePrompt, weight: initial.intenseWeight),
+        ])
+        await service.setMusicConfig(
+            bpm: initial.bpm,
+            density: initial.density,
+            brightness: initial.brightness
+        )
+        audioPlayer.start()
+        await service.play()
+        isStreaming = true
+        waveSession.start()
+    }
+
+    private func pauseWave() async {
+        guard let service = lyriaService else { return }
+        waveSession.pause()
+        await service.pause()
+        audioPlayer.pause()
+        isStreaming = false
+    }
+
+    private func resumeWave() async {
+        guard let service = lyriaService else { return }
+        audioPlayer.resume()
+        await service.play()
+        isStreaming = true
+        waveSession.resume()
+    }
+
+    private func cancelWave() async {
+        waveSession.cancel()
+        await stopWaveMusic()
+    }
+
+    private func stopWaveMusic() async {
+        guard let service = lyriaService else { return }
+        await service.stop()
+        audioPlayer.stop()
+        isStreaming = false
+        service.disconnect()
+        connectionState = .disconnected
+    }
+
+    // MARK: - Free Play actions
 
     private func startMusic() async {
         guard let service = lyriaService else { return }

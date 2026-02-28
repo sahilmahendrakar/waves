@@ -81,11 +81,24 @@ final class LyriaService: ObservableObject {
         await sendJSON(message)
     }
 
-    func setMusicConfig(bpm: Int? = nil, temperature: Double = 1.0) async {
+    func setMusicConfig(
+        bpm: Int? = nil,
+        temperature: Double = 1.0,
+        density: Double? = nil,
+        brightness: Double? = nil,
+        guidance: Double? = nil
+    ) async {
         var config: [String: Any] = ["temperature": temperature]
         if let bpm { config["bpm"] = bpm }
+        if let density { config["density"] = density }
+        if let brightness { config["brightness"] = brightness }
+        if let guidance { config["guidance"] = guidance }
         let message: [String: Any] = ["musicGenerationConfig": config]
         await sendJSON(message)
+    }
+
+    func resetContext() async {
+        await sendJSON(["playbackControl": "RESET_CONTEXT"])
     }
 
     func play() async {
