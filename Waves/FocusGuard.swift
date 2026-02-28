@@ -18,6 +18,12 @@ final class FocusGuard: ObservableObject {
     @Published var blockedDomains: [String] {
         didSet { persist() }
     }
+    @Published var allowedApps: [String] {
+        didSet { persist() }
+    }
+    @Published var allowedDomains: [String] {
+        didSet { persist() }
+    }
     @Published var isViolating = false
     @Published var violationSeconds = 0
     @Published var isSuspended = false
@@ -45,6 +51,14 @@ final class FocusGuard: ObservableObject {
         "tiktok.com",
     ]
 
+    static let defaultAllowedApps = ["Notes", "Google Chrome", "Safari", "Spotify", "Finder", "Calendar"]
+    static let defaultAllowedDomains = [
+        "mail.google.com",
+        "docs.google.com",
+        "notion.so",
+        "github.com",
+    ]
+
     private static let wavesAppName = "Waves"
     private static let graceSeconds = 10
 
@@ -56,6 +70,8 @@ final class FocusGuard: ObservableObject {
         mode = .blocklist
         blockedApps = Self.defaultBlockedApps
         blockedDomains = Self.defaultBlockedDomains
+        allowedApps = Self.defaultAllowedApps
+        allowedDomains = Self.defaultAllowedDomains
         load()
     }
 
@@ -71,6 +87,8 @@ final class FocusGuard: ObservableObject {
     func resetToDefaults() {
         blockedApps = Self.defaultBlockedApps
         blockedDomains = Self.defaultBlockedDomains
+        allowedApps = Self.defaultAllowedApps
+        allowedDomains = Self.defaultAllowedDomains
         mode = .blocklist
     }
 
@@ -95,16 +113,15 @@ final class FocusGuard: ObservableObject {
             return false
 
         case .allowlist:
-            if blockedApps.contains(where: { appName.localizedCaseInsensitiveCompare($0) == .orderedSame }) {
+            if allowedApps.contains(where: { appName.localizedCaseInsensitiveCompare($0) == .orderedSame }) {
                 return false
             }
             if let host {
-                let allowed = blockedDomains.contains { domain in
+                let allowed = allowedDomains.contains { domain in
                     host == domain || host.hasSuffix(".\(domain)")
                 }
                 return !allowed
             }
-            // Non-browser app not in allowlist
             return true
         }
     }
@@ -174,10 +191,18 @@ final class FocusGuard: ObservableObject {
         var mode: FocusGuardMode
         var apps: [String]
         var domains: [String]
+        var allowedApps: [String]?
+        var allowedDomains: [String]?
     }
 
     private func persist() {
-        let config = StoredConfig(mode: mode, apps: blockedApps, domains: blockedDomains)
+        let config = StoredConfig(
+            mode: mode,
+            apps: blockedApps,
+            domains: blockedDomains,
+            allowedApps: allowedApps,
+            allowedDomains: allowedDomains
+        )
         if let data = try? JSONEncoder().encode(config) {
             UserDefaults.standard.set(data, forKey: Self.storageKey)
         }
@@ -191,6 +216,8 @@ final class FocusGuard: ObservableObject {
         mode = config.mode
         blockedApps = config.apps
         blockedDomains = config.domains
+        allowedApps = config.allowedApps ?? Self.defaultAllowedApps
+        allowedDomains = config.allowedDomains ?? Self.defaultAllowedDomains
     }
 }
 #endif
