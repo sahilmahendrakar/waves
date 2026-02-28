@@ -14,5 +14,7 @@
 		<string>com.microsoft.edgemac</string>
 		<string>com.brave.Browser</string>
 	</array>
+	<key>com.apple.security.device.audio-input</key>
+	<true/>
 </dict>
 </plist>

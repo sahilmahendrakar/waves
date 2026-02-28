@@ -7,25 +7,15 @@ enum AppMode: String, CaseIterable {
 }
 
 struct ContentView: View {
+    @EnvironmentObject var appState: AppState
     @AppStorage("geminiAPIKey") private var apiKey = ""
-    @StateObject private var audioPlayer = AudioPlayer()
-    @StateObject private var waveSession = WaveSession()
     #if os(macOS)
     @StateObject private var appMonitor = ActiveAppMonitor()
     @StateObject private var focusGuard = FocusGuard()
     #endif
-    @State private var lyriaService: LyriaService?
     @State private var showingSettings = false
-    private let pingPlayer = PingPlayer()
 
     @AppStorage("appMode") private var mode: AppMode = .wave
-    @State private var prompt = "minimal techno with deep bass"
-    @State private var bpm: Double = 120
-    @State private var isStreaming = false
-    @State private var connectionState: LyriaConnectionState = .disconnected
-
-    private static let calmPrompt = "ambient ethereal spacey synth pads chill"
-    private static let intensePrompt = "energetic driving fast-paced intense electronic"
 
     var body: some View {
         ZStack {
@@ -54,31 +44,28 @@ struct ContentView: View {
         }
         .frame(minWidth: 480, minHeight: 540)
         .onAppear {
-            let service = LyriaService(audioPlayer: audioPlayer)
-            lyriaService = service
-            setupWaveCallbacks(service: service)
             #if os(macOS)
             focusGuard.attach(to: appMonitor)
             focusGuard.onViolationTriggered = {
-                Task { await suspendWave() }
+                Task { await appState.suspendWave() }
             }
             focusGuard.onRefocused = {
-                Task { await resumeSuspendedWave() }
+                Task { await appState.resumeSuspendedWave() }
             }
             #endif
         }
-        .onChange(of: lyriaService?.connectionState) { _, newValue in
-            if let newValue {
-                connectionState = newValue
+        #if os(macOS)
+        .onChange(of: appState.waveSession.state) { _, newState in
+            if newState == .completed {
+                focusGuard.isEnabled = false
             }
         }
-        #if os(macOS)
         .onChange(of: focusGuard.isViolating) { _, violating in
-            if violating && waveSession.state == .running {
-                audioPlayer.fadeOut(over: 10)
+            if violating && appState.waveSession.state == .running {
+                appState.audioPlayer.fadeOut(over: 10)
                 sendRefocusNotification()
             } else if !violating {
-                audioPlayer.cancelFade()
+                appState.audioPlayer.cancelFade()
             }
         }
         #endif
@@ -90,8 +77,6 @@ struct ContentView: View {
             #endif
         }
     }
-
-    // MARK: - Main Content
 
     private var mainContent: some View {
         VStack(spacing: 0) {
@@ -112,8 +97,6 @@ struct ContentView: View {
         }
         .padding(.horizontal, 24)
     }
-
-    // MARK: - API Key Missing
 
     private var apiKeyMissingView: some View {
         VStack(spacing: 12) {
@@ -140,12 +123,10 @@ struct ContentView: View {
         }
     }
 
-    // MARK: - Wave Mode
-
     private var waveControls: some View {
         WaveView(
-            session: waveSession,
-            isConnecting: connectionState == .connecting,
+            session: appState.waveSession,
+            isConnecting: appState.connectionState == .connecting,
             isViolating: isFocusViolating,
             violationSeconds: focusViolationSeconds,
             isSuspended: isFocusSuspended,
@@ -180,15 +161,13 @@ struct ContentView: View {
         #endif
     }
 
-    // MARK: - Free Play Mode
-
     private var freePlayControls: some View {
         VStack(spacing: 20) {
             VStack(alignment: .leading, spacing: 6) {
                 Text("Prompt")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                TextField("Describe the music...", text: $prompt)
+                TextField("Describe the music...", text: $appState.prompt)
                     .textFieldStyle(.roundedBorder)
             }
 
@@ -198,11 +177,11 @@ struct ContentView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Text("\(Int(bpm))")
+                    Text("\(Int(appState.bpm))")
                         .font(.subheadline.monospacedDigit())
                         .foregroundStyle(.secondary)
                 }
-                Slider(value: $bpm, in: 60...200, step: 1)
+                Slider(value: $appState.bpm, in: 60...200, step: 1)
             }
 
             transportControls
@@ -211,9 +190,9 @@ struct ContentView: View {
 
     private var transportControls: some View {
         HStack(spacing: 12) {
-            if isStreaming {
+            if appState.isStreaming {
                 Button {
-                    Task { await pauseMusic() }
+                    Task { await appState.pauseMusic() }
                 } label: {
                     Label("Pause", systemImage: "pause.fill")
                         .frame(maxWidth: .infinity)
@@ -222,7 +201,7 @@ struct ContentView: View {
                 .buttonStyle(.bordered)
 
                 Button {
-                    Task { await stopMusic() }
+                    Task { await appState.stopMusic() }
                 } label: {
                     Label("Stop", systemImage: "stop.fill")
                         .frame(maxWidth: .infinity)
@@ -232,19 +211,17 @@ struct ContentView: View {
                 .tint(.red)
             } else {
                 Button {
-                    Task { await startMusic() }
+                    Task { await appState.startMusic() }
                 } label: {
                     Label("Play", systemImage: "play.fill")
                         .frame(maxWidth: .infinity)
                 }
                 .controlSize(.large)
                 .buttonStyle(.borderedProminent)
-                .disabled(prompt.isEmpty || connectionState == .connecting)
+                .disabled(appState.prompt.isEmpty || appState.connectionState == .connecting)
             }
         }
     }
-
-    // MARK: - Footer Bar
 
     private var footerBar: some View {
         HStack(spacing: 6) {
@@ -276,10 +253,8 @@ struct ContentView: View {
         .padding(.bottom, 10)
     }
 
-    // MARK: - Status Helpers
-
     private var statusColor: Color {
-        switch connectionState {
+        switch appState.connectionState {
         case .disconnected: .gray
         case .connecting: .orange
         case .connected: .green
@@ -288,85 +263,30 @@ struct ContentView: View {
     }
 
     private var statusText: String {
-        switch connectionState {
+        switch appState.connectionState {
         case .disconnected: "Disconnected"
         case .connecting: "Connecting\u{2026}"
-        case .connected: isStreaming ? "Streaming" : "Connected"
+        case .connected: appState.isStreaming ? "Streaming" : "Connected"
         case .error(let msg): "Error: \(msg)"
         }
     }
 
-    // MARK: - Wave Actions
-
-    private func setupWaveCallbacks(service: LyriaService) {
-        waveSession.onParametersChanged = { params, bpmChanged in
-            Task {
-                await service.setPrompts([
-                    (text: Self.calmPrompt, weight: params.calmWeight),
-                    (text: Self.intensePrompt, weight: params.intenseWeight),
-                ])
-                await service.setMusicConfig(
-                    bpm: bpmChanged ? params.bpm : nil,
-                    density: params.density,
-                    brightness: params.brightness
-                )
-                if bpmChanged {
-                    await service.resetContext()
-                }
-            }
-        }
-
-        waveSession.onWaveCompleted = {
-            Task { await stopWaveMusic() }
-        }
-    }
-
     private func startWave() async {
-        guard let service = lyriaService else { return }
-
-        if connectionState != .connected {
-            await service.connect(apiKey: apiKey)
-            connectionState = service.connectionState
-            guard connectionState == .connected else { return }
-        }
-
-        let initial = waveSession.currentParameters
-        await service.setPrompts([
-            (text: Self.calmPrompt, weight: initial.calmWeight),
-            (text: Self.intensePrompt, weight: initial.intenseWeight),
-        ])
-        await service.setMusicConfig(
-            bpm: initial.bpm,
-            density: initial.density,
-            brightness: initial.brightness
-        )
-        audioPlayer.start()
-        audioPlayer.fadeIn(over: 5)
-        await service.play()
-        isStreaming = true
-        waveSession.start()
+        await appState.startWave()
         #if os(macOS)
         focusGuard.isEnabled = true
         #endif
     }
 
     private func pauseWave() async {
-        guard let service = lyriaService else { return }
         #if os(macOS)
         focusGuard.isEnabled = false
         #endif
-        waveSession.pause()
-        await service.pause()
-        audioPlayer.pause()
-        isStreaming = false
+        await appState.pauseWave()
     }
 
     private func resumeWave() async {
-        guard let service = lyriaService else { return }
-        audioPlayer.resume()
-        await service.play()
-        isStreaming = true
-        waveSession.resume()
+        await appState.resumeWave()
         #if os(macOS)
         focusGuard.isEnabled = true
         #endif
@@ -376,52 +296,7 @@ struct ContentView: View {
         #if os(macOS)
         focusGuard.isEnabled = false
         #endif
-        pingPlayer.stop()
-        waveSession.cancel()
-        await stopWaveMusic()
-    }
-
-    private func suspendWave() async {
-        guard let service = lyriaService else { return }
-        waveSession.pause()
-        await service.pause()
-        audioPlayer.pause()
-        isStreaming = false
-        pingPlayer.start()
-    }
-
-    private func resumeSuspendedWave() async {
-        guard let service = lyriaService else { return }
-        pingPlayer.stop()
-        audioPlayer.cancelFade()
-        waveSession.restart()
-        let initial = waveSession.currentParameters
-        await service.setPrompts([
-            (text: Self.calmPrompt, weight: initial.calmWeight),
-            (text: Self.intensePrompt, weight: initial.intenseWeight),
-        ])
-        await service.setMusicConfig(
-            bpm: initial.bpm,
-            density: initial.density,
-            brightness: initial.brightness
-        )
-        await service.resetContext()
-        audioPlayer.resume()
-        audioPlayer.fadeIn(over: 5)
-        await service.play()
-        isStreaming = true
-    }
-
-    private func stopWaveMusic() async {
-        guard let service = lyriaService else { return }
-        #if os(macOS)
-        focusGuard.isEnabled = false
-        #endif
-        await service.stop()
-        audioPlayer.stop()
-        isStreaming = false
-        service.disconnect()
-        connectionState = .disconnected
+        await appState.cancelWave()
     }
 
     #if os(macOS)
@@ -439,42 +314,9 @@ struct ContentView: View {
         UNUserNotificationCenter.current().add(request)
     }
     #endif
-
-    // MARK: - Free Play Actions
-
-    private func startMusic() async {
-        guard let service = lyriaService else { return }
-
-        if connectionState != .connected {
-            await service.connect(apiKey: apiKey)
-            connectionState = service.connectionState
-            guard connectionState == .connected else { return }
-        }
-
-        await service.setPrompts([(text: prompt, weight: 1.0)])
-        await service.setMusicConfig(bpm: Int(bpm))
-        audioPlayer.start()
-        await service.play()
-        isStreaming = true
-    }
-
-    private func pauseMusic() async {
-        guard let service = lyriaService else { return }
-        await service.pause()
-        audioPlayer.pause()
-        isStreaming = false
-    }
-
-    private func stopMusic() async {
-        guard let service = lyriaService else { return }
-        await service.stop()
-        audioPlayer.stop()
-        isStreaming = false
-        service.disconnect()
-        connectionState = .disconnected
-    }
 }
 
 #Preview {
     ContentView()
+        .environmentObject(AppState())
 }
