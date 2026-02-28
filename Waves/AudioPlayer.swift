@@ -9,6 +9,7 @@ final class AudioPlayer: ObservableObject {
     private let engine = AVAudioEngine()
     private let playerNode = AVAudioPlayerNode()
     private let outputFormat: AVAudioFormat
+    private var fadeTask: Task<Void, Never>?
 
     private static let sampleRate: Double = 48_000
     private static let channels: AVAudioChannelCount = 2
@@ -34,6 +35,7 @@ final class AudioPlayer: ObservableObject {
 
     func start() {
         guard !isPlaying else { return }
+        cancelFade()
         do {
             try engine.start()
             playerNode.play()
@@ -55,8 +57,31 @@ final class AudioPlayer: ObservableObject {
     }
 
     func resume() {
+        cancelFade()
         playerNode.play()
         isPlaying = true
+    }
+
+    func fadeOut(over duration: TimeInterval) {
+        fadeTask?.cancel()
+        let steps = 50
+        let interval = duration / Double(steps)
+        let startVolume = playerNode.volume
+
+        fadeTask = Task {
+            for step in 1...steps {
+                guard !Task.isCancelled else { return }
+                try? await Task.sleep(for: .seconds(interval))
+                guard !Task.isCancelled else { return }
+                playerNode.volume = startVolume * Float(steps - step) / Float(steps)
+            }
+        }
+    }
+
+    func cancelFade() {
+        fadeTask?.cancel()
+        fadeTask = nil
+        playerNode.volume = 1.0
     }
 
     /// Enqueue raw interleaved 16-bit PCM data (48 kHz, stereo) for playback.

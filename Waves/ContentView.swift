@@ -53,6 +53,13 @@ struct ContentView: View {
             }
         }
         #if os(macOS)
+        .onChange(of: focusGuard.isViolating) { _, violating in
+            if violating && waveSession.state == .running {
+                audioPlayer.fadeOut(over: 10)
+            } else if !violating {
+                audioPlayer.cancelFade()
+            }
+        }
         .sheet(isPresented: $showingBlocklistSettings) {
             BlocklistSettingsView(focusGuard: focusGuard)
         }
@@ -376,6 +383,7 @@ struct ContentView: View {
 
     private func resumeSuspendedWave() async {
         guard let service = lyriaService else { return }
+        audioPlayer.cancelFade()
         waveSession.restart()
         let initial = waveSession.currentParameters
         await service.setPrompts([
