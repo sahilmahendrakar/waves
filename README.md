@@ -2,6 +2,8 @@
 
 AI-generated music that adapts to your focus.
 
+![Waves](Waves.png)
+
 Waves is a macOS app that generates real-time adaptive music using Google's Lyria Realtime API. Music evolves continuously based on your focus session progress, voice commands, and the app you're currently using.
 
 ## Features
