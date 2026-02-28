@@ -2,6 +2,36 @@ import AVFoundation
 import Combine
 import Foundation
 
+final class PingPlayer {
+    private var player: AVAudioPlayer?
+    private var timer: Timer?
+    private let interval: TimeInterval = 3
+    private let volume: Float = 1
+
+    func start() {
+        stop()
+        guard let url = Bundle.main.url(forResource: "ping", withExtension: "mp3") else { return }
+        player = try? AVAudioPlayer(contentsOf: url)
+        player?.volume = volume
+        playOnce()
+        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+            self?.playOnce()
+        }
+    }
+
+    func stop() {
+        timer?.invalidate()
+        timer = nil
+        player?.stop()
+        player = nil
+    }
+
+    private func playOnce() {
+        player?.currentTime = 0
+        player?.play()
+    }
+}
+
 @MainActor
 final class AudioPlayer: ObservableObject {
     @Published var isPlaying = false

@@ -15,6 +15,7 @@ struct ContentView: View {
     #endif
     @State private var lyriaService: LyriaService?
     @State private var showingSettings = false
+    private let pingPlayer = PingPlayer()
 
     @AppStorage("appMode") private var mode: AppMode = .wave
     @State private var prompt = "minimal techno with deep bass"
@@ -372,6 +373,7 @@ struct ContentView: View {
         #if os(macOS)
         focusGuard.isEnabled = false
         #endif
+        pingPlayer.stop()
         waveSession.cancel()
         await stopWaveMusic()
     }
@@ -382,10 +384,12 @@ struct ContentView: View {
         await service.pause()
         audioPlayer.pause()
         isStreaming = false
+        pingPlayer.start()
     }
 
     private func resumeSuspendedWave() async {
         guard let service = lyriaService else { return }
+        pingPlayer.stop()
         audioPlayer.cancelFade()
         waveSession.restart()
         let initial = waveSession.currentParameters
