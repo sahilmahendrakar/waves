@@ -16,6 +16,8 @@ struct MenuBarSteeringView: View {
                 Spacer()
             }
 
+            waveProgressSection
+
             if appState.isStreaming {
                 HStack(spacing: 6) {
                     Image(systemName: "music.note")
@@ -112,6 +114,30 @@ struct MenuBarSteeringView: View {
             }
             .transition(.opacity)
         }
+    }
+
+    @ViewBuilder
+    private var waveProgressSection: some View {
+        let session = appState.waveSession
+        if session.state == .running || session.state == .paused {
+            HStack(spacing: 8) {
+                Text(formattedTime(session.remainingTime))
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+                ProgressView(value: session.progress)
+                    .tint(.accentColor)
+                if session.state == .paused {
+                    Text("Paused")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+
+    private func formattedTime(_ t: TimeInterval) -> String {
+        let total = Int(t)
+        return String(format: "%d:%02d", total / 60, total % 60)
     }
 
     private var statusColor: Color {
