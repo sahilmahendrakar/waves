@@ -1,4 +1,3 @@
-#if os(macOS)
 import Combine
 import Foundation
 
@@ -220,4 +219,3 @@ final class FocusGuard: ObservableObject {
         allowedDomains = config.allowedDomains ?? Self.defaultAllowedDomains
     }
 }
-#endif

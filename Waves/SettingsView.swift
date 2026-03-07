@@ -3,9 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @Binding var apiKey: String
     @EnvironmentObject var appState: AppState
-    #if os(macOS)
     @ObservedObject var focusGuard: FocusGuard
-    #endif
     @AppStorage("appMode") private var mode: AppMode = .wave
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var showingMusicPreferences = false
@@ -16,16 +14,12 @@ struct SettingsView: View {
         VStack(spacing: 0) {
             header
             Divider()
-            #if os(macOS)
             TabView {
                 generalTab
                     .tabItem { Label("General", systemImage: "gearshape") }
                 FocusGuardSettingsTab(focusGuard: focusGuard)
                     .tabItem { Label("Focus Guard", systemImage: "eye.slash") }
             }
-            #else
-            generalTab
-            #endif
         }
         .frame(minWidth: 440, minHeight: 500)
     }
@@ -58,7 +52,7 @@ struct SettingsView: View {
                         }
                     }
                     .pickerStyle(.segmented)
-                    Text("Wave adapts music intensity over time. Free Play gives you manual control.")
+                    Text("Wave adapts music intensity over time. Vibe gives you manual control.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -253,9 +247,8 @@ struct MusicPreferencesEditor: View {
     }
 }
 
-// MARK: - Focus Guard Tab (macOS)
+// MARK: - Focus Guard Tab
 
-#if os(macOS)
 private struct FocusGuardSettingsTab: View {
     @ObservedObject var focusGuard: FocusGuard
 
@@ -449,4 +442,3 @@ private struct FocusGuardSettingsTab: View {
         newDomain = ""
     }
 }
-#endif

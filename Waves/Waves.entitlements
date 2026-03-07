@@ -4,6 +4,8 @@
 <dict>
 	<key>com.apple.security.app-sandbox</key>
 	<true/>
+	<key>com.apple.security.device.audio-input</key>
+	<true/>
 	<key>com.apple.security.network.client</key>
 	<true/>
 	<key>com.apple.security.temporary-exception.apple-events</key>
@@ -14,7 +16,5 @@
 		<string>com.microsoft.edgemac</string>
 		<string>com.brave.Browser</string>
 	</array>
-	<key>com.apple.security.device.audio-input</key>
-	<true/>
 </dict>
 </plist>

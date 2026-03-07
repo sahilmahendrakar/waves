@@ -3,11 +3,12 @@ import SwiftUI
 struct OnboardingView: View {
     @EnvironmentObject var appState: AppState
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @AppStorage("geminiAPIKey") private var apiKey = ""
     @State private var currentStep = 0
     @State private var selectedGenres: Set<String> = []
     @State private var selectedMood = ""
 
-    private let totalSteps = 3
+    private let totalSteps = 8
 
     var body: some View {
         VStack(spacing: 0) {
@@ -19,8 +20,13 @@ struct OnboardingView: View {
             Group {
                 switch currentStep {
                 case 0: welcomeStep
-                case 1: genreStep
-                case 2: moodStep
+                case 1: wavesStep
+                case 2: focusGuardStep
+                case 3: steeringStep
+                case 4: vibeModeStep
+                case 5: genreStep
+                case 6: moodStep
+                case 7: apiKeyStep
                 default: EmptyView()
                 }
             }
@@ -61,6 +67,74 @@ struct OnboardingView: View {
                 .font(.largeTitle.weight(.bold))
 
             Text("Adaptive music that responds to your focus.\nTell us what you like and we'll craft the\nperfect soundscape to keep you in the zone.")
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .lineSpacing(4)
+        }
+    }
+
+    private var wavesStep: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "water.waves")
+                .font(.system(size: 64))
+                .foregroundStyle(.tint)
+
+            Text("Start a Wave")
+                .font(.title.weight(.bold))
+
+            Text("Pick a duration and let the music carry you.\nIt flows from calm to intense and back,\nmatching the natural arc of deep focus.")
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .lineSpacing(4)
+        }
+    }
+
+    private var focusGuardStep: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "shield.checkered")
+                .font(.system(size: 64))
+                .foregroundStyle(.tint)
+
+            Text("Stay on Track")
+                .font(.title.weight(.bold))
+
+            Text("Set up blocklists and allowlists to guard your focus.\nIf you drift to a distracting app or site,\nthe music fades out to nudge you back.")
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .lineSpacing(4)
+        }
+    }
+
+    private var steeringStep: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "antenna.radiowaves.left.and.right")
+                .font(.system(size: 64))
+                .foregroundStyle(.tint)
+
+            Text("Steer from the Menu Bar")
+                .font(.title.weight(.bold))
+
+            Text("Type or speak to change the music style,\nor block distracting apps on the fly\u{2014}all\nwithout leaving what you\u{2019}re working on.")
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .lineSpacing(4)
+        }
+    }
+
+    private var vibeModeStep: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "slider.horizontal.3")
+                .font(.system(size: 64))
+                .foregroundStyle(.tint)
+
+            Text("Vibe Mode")
+                .font(.title.weight(.bold))
+
+            Text("Want full control? Write your own prompt,\nset the BPM, and let the music adapt\nautomatically to whatever app you\u{2019}re using.")
                 .font(.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -121,6 +195,31 @@ struct OnboardingView: View {
         }
     }
 
+    private var apiKeyStep: some View {
+        VStack(spacing: 24) {
+            VStack(spacing: 8) {
+                Text("Connect to Gemini")
+                    .font(.title2.weight(.semibold))
+
+                Text("Waves uses the Gemini API to generate music\nand understand your steering commands.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(2)
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                SecureField("Paste your Gemini API key", text: $apiKey)
+                    .textFieldStyle(.roundedBorder)
+
+                Text("Get a free key at aistudio.google.com")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .frame(maxWidth: 340)
+        }
+    }
+
     private var navigationButtons: some View {
         HStack(spacing: 12) {
             if currentStep > 0 {
@@ -154,9 +253,10 @@ struct OnboardingView: View {
 
     private var canAdvance: Bool {
         switch currentStep {
-        case 0: true
-        case 1: !selectedGenres.isEmpty
-        case 2: !selectedMood.isEmpty
+        case 0...4: true
+        case 5: !selectedGenres.isEmpty
+        case 6: !selectedMood.isEmpty
+        case 7: !apiKey.trimmingCharacters(in: .whitespaces).isEmpty
         default: true
         }
     }

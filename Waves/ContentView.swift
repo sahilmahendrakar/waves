@@ -3,17 +3,15 @@ import UserNotifications
 
 enum AppMode: String, CaseIterable {
     case wave = "Wave"
-    case freePlay = "Free Play"
+    case vibe = "Vibe"
 }
 
 struct ContentView: View {
     @EnvironmentObject var appState: AppState
     @AppStorage("geminiAPIKey") private var apiKey = ""
-    #if os(macOS)
     @StateObject private var appMonitor = ActiveAppMonitor()
     @StateObject private var focusGuard = FocusGuard()
     @StateObject private var appMusicRouter = AppMusicRouter()
-    #endif
     @State private var showingSettings = false
 
     @AppStorage("appMode") private var mode: AppMode = .wave
@@ -45,7 +43,6 @@ struct ContentView: View {
         }
         .frame(minWidth: 480, minHeight: 540)
         .onAppear {
-            #if os(macOS)
             appState.focusGuard = focusGuard
             focusGuard.attach(to: appMonitor)
             focusGuard.onViolationTriggered = {
@@ -58,9 +55,7 @@ struct ContentView: View {
             appMusicRouter.onPromptChanged = { prompt in
                 Task { await appState.applyRoutedPrompt(prompt) }
             }
-            #endif
         }
-        #if os(macOS)
         .onChange(of: appState.waveSession.state) { _, newState in
             if newState == .completed {
                 focusGuard.isEnabled = false
@@ -74,15 +69,9 @@ struct ContentView: View {
                 appState.audioPlayer.cancelFade()
             }
         }
-        #endif
         .sheet(isPresented: $showingSettings) {
-            #if os(macOS)
             SettingsView(apiKey: $apiKey, focusGuard: focusGuard)
                 .environmentObject(appState)
-            #else
-            SettingsView(apiKey: $apiKey)
-                .environmentObject(appState)
-            #endif
         }
     }
 
@@ -96,8 +85,8 @@ struct ContentView: View {
                 switch mode {
                 case .wave:
                     waveControls
-                case .freePlay:
-                    freePlayControls
+                case .vibe:
+                    vibeControls
                 }
             }
 
@@ -135,9 +124,9 @@ struct ContentView: View {
         WaveView(
             session: appState.waveSession,
             isConnecting: appState.connectionState == .connecting,
-            isViolating: isFocusViolating,
-            violationSeconds: focusViolationSeconds,
-            isSuspended: isFocusSuspended,
+            isViolating: focusGuard.isViolating,
+            violationSeconds: focusGuard.violationSeconds,
+            isSuspended: focusGuard.isSuspended,
             onStart: { Task { await startWave() } },
             onPause: { Task { await pauseWave() } },
             onResume: { Task { await resumeWave() } },
@@ -145,39 +134,24 @@ struct ContentView: View {
         )
     }
 
-    private var isFocusViolating: Bool {
-        #if os(macOS)
-        focusGuard.isViolating
-        #else
-        false
-        #endif
-    }
+    private var vibeControls: some View {
+        VStack(spacing: 24) {
+            VStack(spacing: 6) {
+                Text("Vibe")
+                    .font(.system(size: 34, weight: .semibold, design: .rounded))
+                Text("Play. Create. Flow.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .tracking(1.2)
+            }
+            .padding(.bottom, 4)
 
-    private var focusViolationSeconds: Int {
-        #if os(macOS)
-        focusGuard.violationSeconds
-        #else
-        0
-        #endif
-    }
-
-    private var isFocusSuspended: Bool {
-        #if os(macOS)
-        focusGuard.isSuspended
-        #else
-        false
-        #endif
-    }
-
-    private var freePlayControls: some View {
-        VStack(spacing: 20) {
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    Text("Prompt")
+                    Text("What do you want to listen to?")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Spacer()
-                    #if os(macOS)
                     if let rule = appMusicRouter.activeRule, appMusicRouter.isEnabled {
                         Text(rule.label)
                             .font(.caption2.weight(.medium))
@@ -186,82 +160,102 @@ struct ContentView: View {
                             .background(Color.accentColor.opacity(0.15))
                             .clipShape(Capsule())
                     }
-                    #endif
                 }
-                TextField("Describe the music...", text: $appState.prompt)
-                    .textFieldStyle(.roundedBorder)
+                HStack(spacing: 8) {
+                    TextField("Describe the music...", text: $appState.prompt)
+                        .textFieldStyle(.roundedBorder)
+
+                    HStack(spacing: 4) {
+                        Stepper(value: $appState.bpm, in: 60...200, step: 1) {
+                            TextField("", value: $appState.bpm, format: .number.precision(.fractionLength(0)))
+                                .textFieldStyle(.roundedBorder)
+                                .frame(width: 48)
+                                .multilineTextAlignment(.center)
+                                .monospacedDigit()
+                        }
+                        Text("BPM")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                }
             }
 
-            VStack(alignment: .leading, spacing: 6) {
-                HStack {
-                    Text("BPM")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    Text("\(Int(appState.bpm))")
-                        .font(.subheadline.monospacedDigit())
-                        .foregroundStyle(.secondary)
-                }
-                Slider(value: $appState.bpm, in: 60...200, step: 1)
-            }
+            autoAdaptSection
 
             transportControls
-
-            #if os(macOS)
-            appRulesSection
-            #endif
         }
     }
 
-    #if os(macOS)
-    @State private var showingAdvanced = false
+    @State private var showingRules = false
 
-    private var appRulesSection: some View {
-        DisclosureGroup("Advanced", isExpanded: $showingAdvanced) {
-            VStack(alignment: .leading, spacing: 12) {
-                Toggle("Auto-adapt music to active app", isOn: $appMusicRouter.autoRoutingEnabled)
+    private var autoAdaptSection: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Toggle("Auto-adapt music to what you're doing", isOn: $appMusicRouter.autoRoutingEnabled)
                     .font(.subheadline)
 
-                if appMusicRouter.autoRoutingEnabled {
-                    ForEach($appMusicRouter.rules) { $rule in
-                        AppMusicRuleRow(rule: $rule, onDelete: {
-                            appMusicRouter.rules.removeAll { $0.id == rule.id }
-                        })
-                    }
-
-                    HStack {
-                        Button {
-                            let newRule = AppMusicRule(
-                                id: UUID(),
-                                label: "New Rule",
-                                appNames: [],
-                                domains: [],
-                                prompt: ""
-                            )
-                            appMusicRouter.rules.append(newRule)
-                        } label: {
-                            Label("Add Rule", systemImage: "plus")
-                                .font(.caption)
-                        }
-                        .buttonStyle(.borderless)
-
-                        Spacer()
-
-                        Button("Reset to Defaults") {
-                            appMusicRouter.resetToDefaults()
-                        }
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .buttonStyle(.borderless)
-                    }
+                if appMusicRouter.autoRoutingEnabled, let rule = appMusicRouter.activeRule, appMusicRouter.isEnabled {
+                    Text(rule.label)
+                        .font(.caption2.weight(.medium))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(Color.accentColor.opacity(0.15))
+                        .clipShape(Capsule())
                 }
+
+                Spacer(minLength: 0)
             }
-            .padding(.top, 8)
+            .padding(.vertical, 10)
+            .padding(.horizontal, 14)
+
+            if appMusicRouter.autoRoutingEnabled {
+                Divider()
+                    .padding(.horizontal, 14)
+
+                DisclosureGroup("Rules", isExpanded: $showingRules) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        ForEach($appMusicRouter.rules) { $rule in
+                            AppMusicRuleRow(rule: $rule, onDelete: {
+                                appMusicRouter.rules.removeAll { $0.id == rule.id }
+                            })
+                        }
+
+                        HStack {
+                            Button {
+                                let newRule = AppMusicRule(
+                                    id: UUID(),
+                                    label: "New Rule",
+                                    appNames: [],
+                                    domains: [],
+                                    prompt: ""
+                                )
+                                appMusicRouter.rules.append(newRule)
+                            } label: {
+                                Label("Add Rule", systemImage: "plus")
+                                    .font(.caption)
+                            }
+                            .buttonStyle(.borderless)
+
+                            Spacer()
+
+                            Button("Reset to Defaults") {
+                                appMusicRouter.resetToDefaults()
+                            }
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .buttonStyle(.borderless)
+                        }
+                    }
+                    .padding(.top, 8)
+                }
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .padding(.vertical, 10)
+                .padding(.horizontal, 14)
+            }
         }
-        .font(.subheadline)
-        .foregroundStyle(.secondary)
+        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
     }
-    #endif
 
     private var transportControls: some View {
         HStack(spacing: 12) {
@@ -269,9 +263,7 @@ struct ContentView: View {
                 Button {
                     Task {
                         await appState.pauseMusic()
-                        #if os(macOS)
                         appMusicRouter.isEnabled = false
-                        #endif
                     }
                 } label: {
                     Label("Pause", systemImage: "pause.fill")
@@ -283,9 +275,7 @@ struct ContentView: View {
                 Button {
                     Task {
                         await appState.stopMusic()
-                        #if os(macOS)
                         appMusicRouter.isEnabled = false
-                        #endif
                     }
                 } label: {
                     Label("Stop", systemImage: "stop.fill")
@@ -298,12 +288,10 @@ struct ContentView: View {
                 Button {
                     Task {
                         await appState.startMusic()
-                        #if os(macOS)
                         if appMusicRouter.autoRoutingEnabled {
                             appMusicRouter.originalPrompt = appState.prompt
                             appMusicRouter.isEnabled = true
                         }
-                        #endif
                     }
                 } label: {
                     Label("Play", systemImage: "play.fill")
@@ -327,7 +315,6 @@ struct ContentView: View {
 
             Spacer()
 
-            #if os(macOS)
             if !appMonitor.appName.isEmpty {
                 HStack(spacing: 4) {
                     if let icon = appMonitor.appIcon {
@@ -340,7 +327,6 @@ struct ContentView: View {
                         .foregroundStyle(.quaternary)
                 }
             }
-            #endif
         }
         .padding(.horizontal, 20)
         .padding(.bottom, 10)
@@ -366,33 +352,24 @@ struct ContentView: View {
 
     private func startWave() async {
         await appState.startWave()
-        #if os(macOS)
         focusGuard.isEnabled = true
-        #endif
     }
 
     private func pauseWave() async {
-        #if os(macOS)
         focusGuard.isEnabled = false
-        #endif
         await appState.pauseWave()
     }
 
     private func resumeWave() async {
         await appState.resumeWave()
-        #if os(macOS)
         focusGuard.isEnabled = true
-        #endif
     }
 
     private func cancelWave() async {
-        #if os(macOS)
         focusGuard.isEnabled = false
-        #endif
         await appState.cancelWave()
     }
 
-    #if os(macOS)
     private func sendRefocusNotification() {
         let content = UNMutableNotificationContent()
         content.title = "Waves"
@@ -406,10 +383,8 @@ struct ContentView: View {
         )
         UNUserNotificationCenter.current().add(request)
     }
-    #endif
 }
 
-#if os(macOS)
 struct AppMusicRuleRow: View {
     @Binding var rule: AppMusicRule
     var onDelete: () -> Void
@@ -547,7 +522,6 @@ struct AppMusicRuleRow: View {
         newDomain = ""
     }
 }
-#endif
 
 #Preview {
     ContentView()

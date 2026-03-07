@@ -1,4 +1,3 @@
-#if os(macOS)
 import Combine
 import Foundation
 
@@ -113,4 +112,3 @@ final class AppMusicRouter: ObservableObject {
         }
     }
 }
-#endif

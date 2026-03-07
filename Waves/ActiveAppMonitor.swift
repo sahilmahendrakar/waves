@@ -1,4 +1,3 @@
-#if os(macOS)
 import AppKit
 import Combine
 import SwiftUI
@@ -93,4 +92,3 @@ final class ActiveAppMonitor: ObservableObject {
         urlTimer?.invalidate()
     }
 }
-#endif

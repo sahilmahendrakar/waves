@@ -15,9 +15,7 @@ final class AppState: ObservableObject {
     @Published var connectionState: LyriaConnectionState = .disconnected
     @Published var steeringStatus: SteeringStatus = .idle
 
-    #if os(macOS)
     weak var focusGuard: FocusGuard?
-    #endif
 
     private var userSteeringPrompt: String?
     private var cancellables = Set<AnyCancellable>()
@@ -75,7 +73,7 @@ final class AppState: ObservableObject {
         }
     }
 
-    // MARK: - Free Play
+    // MARK: - Vibe
 
     func startMusic() async {
         guard !apiKey.isEmpty else { return }
@@ -216,13 +214,8 @@ final class AppState: ObservableObject {
 
         steeringStatus = .classifying
 
-        #if os(macOS)
         let domains = focusGuard?.blockedDomains ?? []
         let apps = focusGuard?.blockedApps ?? []
-        #else
-        let domains: [String] = []
-        let apps: [String] = []
-        #endif
 
         let intent: SteeringIntent
         do {
@@ -243,7 +236,6 @@ final class AppState: ObservableObject {
             await steerMusic(prompt)
             setSteeringStatus(.success("Music: \(prompt)"))
 
-        #if os(macOS)
         case .block(let domain, let appName):
             guard let guard_ = focusGuard else { break }
             var blocked: [String] = []
@@ -275,10 +267,6 @@ final class AppState: ObservableObject {
             }
             guard_.reevaluate()
             setSteeringStatus(.success("Unblocked \(unblocked.joined(separator: " & "))"))
-        #else
-        case .block, .unblock:
-            setSteeringStatus(.error("Focus Guard is only available on macOS"))
-        #endif
         }
     }
 

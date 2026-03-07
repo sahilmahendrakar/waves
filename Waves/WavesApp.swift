@@ -20,12 +20,10 @@ struct WavesApp: App {
             }
         }
 
-        #if os(macOS)
         MenuBarExtra("Waves", systemImage: "waveform.circle.fill") {
             MenuBarSteeringView()
                 .environmentObject(appState)
         }
         .menuBarExtraStyle(.window)
-        #endif
     }
 }
