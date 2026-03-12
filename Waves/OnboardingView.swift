@@ -23,7 +23,7 @@ struct OnboardingView: View {
                 case 1: wavesStep
                 case 2: focusGuardStep
                 case 3: steeringStep
-                case 4: vibeModeStep
+                case 4: surfModeStep
                 case 5: genreStep
                 case 6: moodStep
                 case 7: apiKeyStep
@@ -125,13 +125,13 @@ struct OnboardingView: View {
         }
     }
 
-    private var vibeModeStep: some View {
+    private var surfModeStep: some View {
         VStack(spacing: 20) {
             Image(systemName: "slider.horizontal.3")
                 .font(.system(size: 64))
                 .foregroundStyle(.tint)
 
-            Text("Vibe Mode")
+            Text("Surf Mode")
                 .font(.title.weight(.bold))
 
             Text("Want full control? Write your own prompt,\nset the BPM, and let the music adapt\nautomatically to whatever app you\u{2019}re using.")

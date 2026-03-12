@@ -3,7 +3,7 @@ import UserNotifications
 
 enum AppMode: String, CaseIterable {
     case wave = "Wave"
-    case vibe = "Vibe"
+    case vibe = "Surf"
 }
 
 struct ContentView: View {
@@ -137,7 +137,7 @@ struct ContentView: View {
     private var vibeControls: some View {
         VStack(spacing: 24) {
             VStack(spacing: 6) {
-                Text("Vibe")
+                Text("Surf")
                     .font(.system(size: 34, weight: .semibold, design: .rounded))
                 Text("Play. Create. Flow.")
                     .font(.subheadline)

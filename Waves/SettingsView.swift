@@ -52,7 +52,7 @@ struct SettingsView: View {
                         }
                     }
                     .pickerStyle(.segmented)
-                    Text("Wave adapts music intensity over time. Vibe gives you manual control.")
+                    Text("Wave adapts music intensity over time. Surf gives you manual control.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

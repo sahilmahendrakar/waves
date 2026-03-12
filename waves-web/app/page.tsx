@@ -8,9 +8,9 @@ const features = [
         <polyline points="12 6 12 12 16 14" />
       </svg>
     ),
-    title: "Wave Sessions",
+    title: "Waves Mode",
     description:
-      "Timed focus sessions with adaptive intensity that ramps up and winds down with your workflow.",
+      "Deep focus sessions with a rising and falling intensity arc that follows your work rhythm.",
   },
   {
     icon: (
@@ -20,9 +20,9 @@ const features = [
         <circle cx="18" cy="16" r="3" />
       </svg>
     ),
-    title: "Vibe Mode",
+    title: "Surf Mode",
     description:
-      "Free-play mode with manual prompts and app-based routing. Shape the sound however you want.",
+      "Auto-adapting music that responds to your activity and keeps you in the zone without manual tweaking.",
   },
   {
     icon: (
@@ -85,7 +85,7 @@ const steps = [
     number: "02",
     title: "Choose Your Mode",
     description:
-      "Pick Wave mode for timed focus sessions, or Vibe mode for free play.",
+      "Pick Waves mode for deep sessions, or Surf mode for auto-adapting flow.",
   },
   {
     number: "03",
@@ -200,6 +200,85 @@ export default function Home() {
                 </p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="relative px-6 py-20">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/3 left-1/4 w-[500px] h-[500px] rounded-full bg-cyan/5 blur-[150px]" />
+          <div className="absolute bottom-1/3 right-1/4 w-[500px] h-[500px] rounded-full bg-purple/5 blur-[150px]" />
+        </div>
+
+        <div className="relative z-10 mx-auto max-w-6xl space-y-8">
+          <div className="glass-card rounded-3xl border border-cyan/30 bg-cyan/5 p-8 sm:p-10">
+            <div className="max-w-4xl">
+              <p className="text-xs uppercase tracking-[0.2em] text-cyan/80">
+                Waves Mode
+              </p>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-5xl">
+                A complete focus cycle that guides you back when you drift
+              </h2>
+              <p className="mt-4 text-base leading-relaxed text-white/65 sm:text-lg">
+                Start by setting a blocklist or allowlist for apps and websites.
+                Waves builds intensity as you settle in, crescendos when you are
+                locked in, and keeps pushing momentum while you work.
+              </p>
+            </div>
+            <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+                <h3 className="text-sm font-semibold text-white">
+                  Set your boundaries
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-white/55">
+                  Use blocklist mode to mute known distractions, or allowlist mode
+                  to only permit your focused apps and sites.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+                <h3 className="text-sm font-semibold text-white">
+                  Music crescendos with your momentum
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-white/55">
+                  The soundtrack evolves from calm to energized as your session
+                  progresses, then resolves as your wave completes.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+                <h3 className="text-sm font-semibold text-white">
+                  Drift detection and reset
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-white/55">
+                  If you get distracted, the music stops, Waves pings you, and the
+                  wave resets so your next focused stretch starts clean.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+                <h3 className="text-sm font-semibold text-white">
+                  Voice steering on the fly
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-white/55">
+                  Speak to adjust your blocklist or shift the musical direction in
+                  real time without leaving your workflow.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="glass-card rounded-3xl border border-purple/30 bg-purple/5 p-8 sm:p-10">
+            <div className="max-w-4xl">
+              <p className="text-xs uppercase tracking-[0.2em] text-purple/80">
+                Surf Mode
+              </p>
+              <h2 className="mt-3 text-2xl font-bold tracking-tight text-white sm:text-4xl">
+                Adaptive flow music that keeps you in the zone
+              </h2>
+              <p className="mt-4 text-base leading-relaxed text-white/65 sm:text-lg">
+                Surf mode continuously adapts your soundtrack to your activity and
+                context, balancing familiarity and variation so you can stay in a
+                productive groove for longer.
+              </p>
+            </div>
           </div>
         </div>
       </section>
