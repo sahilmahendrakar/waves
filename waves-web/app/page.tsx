@@ -1,65 +1,319 @@
 import Image from "next/image";
 
+const features = [
+  {
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12 6 12 12 16 14" />
+      </svg>
+    ),
+    title: "Wave Sessions",
+    description:
+      "Timed focus sessions with adaptive intensity that ramps up and winds down with your workflow.",
+  },
+  {
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
+        <path d="M9 18V5l12-2v13" />
+        <circle cx="6" cy="18" r="3" />
+        <circle cx="18" cy="16" r="3" />
+      </svg>
+    ),
+    title: "Vibe Mode",
+    description:
+      "Free-play mode with manual prompts and app-based routing. Shape the sound however you want.",
+  },
+  {
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
+        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+        <line x1="12" x2="12" y1="19" y2="22" />
+      </svg>
+    ),
+    title: "Voice Steering",
+    description:
+      "Natural language commands to shape the music in real time. Just speak and the music responds.",
+  },
+  {
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
+        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+        <circle cx="12" cy="12" r="3" />
+      </svg>
+    ),
+    title: "FocusGuard",
+    description:
+      "Monitors your activity and gently refocuses you when you drift. Stay in the zone without trying.",
+  },
+  {
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
+        <rect x="2" y="3" width="20" height="14" rx="2" />
+        <line x1="8" x2="16" y1="21" y2="21" />
+        <line x1="12" x2="12" y1="17" y2="21" />
+      </svg>
+    ),
+    title: "App Music Routing",
+    description:
+      "Automatically switches the music based on your active app. Code, design, browse — each gets its own sound.",
+  },
+  {
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7">
+        <rect x="3" y="1" width="18" height="4" rx="1" />
+        <path d="M12 5v2" />
+        <path d="M8 5v1" />
+        <path d="M16 5v1" />
+        <rect x="1" y="7" width="22" height="16" rx="2" />
+      </svg>
+    ),
+    title: "Menu Bar Control",
+    description:
+      "Always accessible from your macOS menu bar. One click to play, pause, or switch modes.",
+  },
+];
+
+const steps = [
+  {
+    number: "01",
+    title: "Launch from Menu Bar",
+    description: "Click the Waves icon in your macOS menu bar to get started.",
+  },
+  {
+    number: "02",
+    title: "Choose Your Mode",
+    description:
+      "Pick Wave mode for timed focus sessions, or Vibe mode for free play.",
+  },
+  {
+    number: "03",
+    title: "Let Music Adapt",
+    description:
+      "The AI-generated music evolves in real time as you work, keeping you in flow.",
+  },
+];
+
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen overflow-x-hidden">
+      {/* ==================== HERO ==================== */}
+      <section className="radial-hero relative flex min-h-screen flex-col items-center justify-center px-6 text-center">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-cyan/5 blur-[120px] animate-glow-pulse" />
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-purple/8 blur-[100px] animate-glow-pulse animation-delay-1000" />
+        </div>
+
+        <div className="relative z-10 flex flex-col items-center gap-8 max-w-3xl">
+          <div className="animate-fade-in-up animate-float">
+            <Image
+              src="/icon.png"
+              alt="Waves app icon"
+              width={140}
+              height={140}
+              priority
+              className="rounded-[28px] shadow-2xl shadow-cyan/20"
+            />
+          </div>
+
+          <h1 className="animate-fade-in-up animation-delay-200 text-5xl font-bold tracking-tight text-white sm:text-7xl">
+            Your Desktop{" "}
+            <span className="bg-gradient-to-r from-cyan via-blue to-purple bg-clip-text text-transparent">
+              Musical Companion
+            </span>
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
+
+          <p className="animate-fade-in-up animation-delay-400 text-lg text-white/60 sm:text-xl max-w-xl leading-relaxed">
+            AI-generated music that adapts to your focus. Powered by real-time
+            generative audio, Waves keeps you in the zone.
+          </p>
+
+          <div className="animate-fade-in-up animation-delay-600 flex flex-col items-center gap-4 sm:flex-row">
             <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              href="#"
+              className="glow-button inline-flex items-center gap-2.5 rounded-full px-8 py-3.5 text-base font-semibold text-white"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11Z" />
+              </svg>
+              Download for macOS
+            </a>
             <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              href="#features"
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 px-6 py-3.5 text-base font-medium text-white/70 transition-colors hover:border-white/20 hover:text-white"
             >
-              Learning
-            </a>{" "}
-            center.
+              Learn more
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                <path fillRule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
+              </svg>
+            </a>
+          </div>
+        </div>
+
+        <div className="absolute bottom-12 animate-fade-in-up animation-delay-1000">
+          <div className="flex flex-col items-center gap-2 text-white/30 text-sm">
+            <span>Scroll to explore</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 animate-bounce">
+              <path fillRule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
+            </svg>
+          </div>
+        </div>
+      </section>
+
+      {/* ==================== FEATURES ==================== */}
+      <section id="features" className="relative px-6 py-32">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full bg-purple/5 blur-[150px]" />
+          <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full bg-cyan/5 blur-[120px]" />
+        </div>
+
+        <div className="relative z-10 mx-auto max-w-6xl">
+          <div className="mb-16 text-center">
+            <h2 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">
+              Everything you need to{" "}
+              <span className="bg-gradient-to-r from-cyan to-purple bg-clip-text text-transparent">
+                stay in flow
+              </span>
+            </h2>
+            <p className="mt-4 text-lg text-white/50 max-w-2xl mx-auto">
+              Waves combines AI music generation with smart productivity
+              features to create your perfect work soundtrack.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {features.map((feature, i) => (
+              <div
+                key={feature.title}
+                className="glass-card group rounded-2xl p-7"
+                style={{ animationDelay: `${i * 0.1}s` }}
+              >
+                <div className="mb-4 inline-flex rounded-xl bg-gradient-to-br from-cyan/10 to-purple/10 p-3 text-cyan transition-colors group-hover:from-cyan/20 group-hover:to-purple/20">
+                  {feature.icon}
+                </div>
+                <h3 className="mb-2 text-lg font-semibold text-white">
+                  {feature.title}
+                </h3>
+                <p className="text-sm leading-relaxed text-white/50">
+                  {feature.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ==================== HOW IT WORKS ==================== */}
+      <section className="relative px-6 py-32">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[300px] rounded-full bg-blue/5 blur-[150px]" />
+        </div>
+
+        <div className="relative z-10 mx-auto max-w-4xl">
+          <div className="mb-16 text-center">
+            <h2 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">
+              Get started in{" "}
+              <span className="bg-gradient-to-r from-cyan to-blue bg-clip-text text-transparent">
+                seconds
+              </span>
+            </h2>
+            <p className="mt-4 text-lg text-white/50">
+              Three simple steps to your perfect focus soundtrack.
+            </p>
+          </div>
+
+          <div className="relative grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-6">
+            <div className="absolute top-[60px] left-[16.67%] right-[16.67%] hidden h-px md:block step-connector" />
+
+            {steps.map((step, i) => (
+              <div key={step.number} className="relative flex flex-col items-center text-center">
+                <div className="relative mb-6 flex h-[72px] w-[72px] items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03]">
+                  <span className="text-2xl font-bold bg-gradient-to-br from-cyan to-blue bg-clip-text text-transparent">
+                    {step.number}
+                  </span>
+                  {i < steps.length - 1 && (
+                    <div className="absolute -right-4 top-1/2 -translate-y-1/2 hidden md:block">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-white/20">
+                        <path fillRule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+                <h3 className="mb-2 text-lg font-semibold text-white">
+                  {step.title}
+                </h3>
+                <p className="text-sm leading-relaxed text-white/50 max-w-[240px]">
+                  {step.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ==================== BOTTOM CTA ==================== */}
+      <section className="relative px-6 py-32">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full bg-cyan/5 blur-[150px]" />
+          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] rounded-full bg-purple/5 blur-[120px]" />
+        </div>
+
+        <div className="relative z-10 mx-auto max-w-2xl text-center">
+          <div className="mb-8">
+            <Image
+              src="/icon.png"
+              alt="Waves app icon"
+              width={80}
+              height={80}
+              className="mx-auto rounded-[18px] shadow-xl shadow-cyan/15"
+            />
+          </div>
+          <h2 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">
+            Ready to find your{" "}
+            <span className="bg-gradient-to-r from-cyan via-blue to-purple bg-clip-text text-transparent">
+              flow
+            </span>
+            ?
+          </h2>
+          <p className="mt-4 text-lg text-white/50">
+            Download Waves and let AI-generated music keep you in the zone.
+          </p>
+          <div className="mt-8 flex flex-col items-center gap-4">
+            <a
+              href="#"
+              className="glow-button inline-flex items-center gap-2.5 rounded-full px-8 py-3.5 text-base font-semibold text-white"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11Z" />
+              </svg>
+              Download for macOS
+            </a>
+            <span className="text-sm text-white/30">
+              Available for macOS 15.4+
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* ==================== FOOTER ==================== */}
+      <footer className="border-t border-white/5 px-6 py-8">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 sm:flex-row">
+          <div className="flex items-center gap-2.5">
+            <Image
+              src="/icon.png"
+              alt="Waves"
+              width={24}
+              height={24}
+              className="rounded-md"
+            />
+            <span className="text-sm font-medium text-white/60">Waves</span>
+          </div>
+          <p className="text-sm text-white/30">
+            Built by Lyrn &middot; &copy; {new Date().getFullYear()}
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </footer>
     </div>
   );
 }

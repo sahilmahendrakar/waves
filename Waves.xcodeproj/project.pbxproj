@@ -261,6 +261,7 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Waves/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Waves uses your microphone for voice-based music steering.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Waves uses speech recognition to convert your voice into music steering prompts.";
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
@@ -308,6 +309,7 @@
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Waves/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Waves uses your microphone for voice-based music steering.";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "Waves uses speech recognition to convert your voice into music steering prompts.";
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
