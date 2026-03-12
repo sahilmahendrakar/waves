@@ -99,29 +99,24 @@ export default function Home() {
   return (
     <div className="min-h-screen overflow-x-hidden">
       {/* ==================== HERO ==================== */}
-      <section className="radial-hero relative flex min-h-screen flex-col items-center justify-center px-6 text-center">
+      <section className="radial-hero relative flex min-h-screen flex-col items-center justify-center overflow-visible px-6 text-center">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-cyan/5 blur-[120px] animate-glow-pulse" />
           <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-purple/8 blur-[100px] animate-glow-pulse animation-delay-1000" />
+          <div className="ripple-ring absolute left-1/2 top-1/3 h-[380px] w-[380px] -translate-x-1/2 -translate-y-1/2 rounded-full" />
+          <div className="ripple-ring animation-delay-1000 absolute left-1/2 top-1/3 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full" />
+          <div className="ripple-ring animation-delay-2000 absolute left-1/2 top-1/3 h-[620px] w-[620px] -translate-x-1/2 -translate-y-1/2 rounded-full" />
         </div>
 
-        <div className="relative z-10 flex flex-col items-center gap-8 max-w-3xl">
-          <div className="animate-fade-in-up animate-float">
-            <Image
-              src="/icon.png"
-              alt="Waves app icon"
-              width={140}
-              height={140}
-              priority
-              className="rounded-[28px] shadow-2xl shadow-cyan/20"
-            />
+        <div className="relative z-10 flex max-w-4xl flex-col items-center gap-8 overflow-visible">
+          <div className="animate-fade-in-up overflow-visible">
+            <div className="hero-wordmark animate-float bg-gradient-to-r from-cyan via-blue to-purple bg-clip-text text-transparent">
+              Waves
+            </div>
           </div>
 
-          <h1 className="animate-fade-in-up animation-delay-200 text-5xl font-bold tracking-tight text-white sm:text-7xl">
-            Your Desktop{" "}
-            <span className="bg-gradient-to-r from-cyan via-blue to-purple bg-clip-text text-transparent">
-              Musical Companion
-            </span>
+          <h1 className="animate-fade-in-up animation-delay-200 text-2xl font-semibold tracking-tight text-white/90 sm:text-4xl">
+            Your Desktop Musical Companion
           </h1>
 
           <p className="animate-fade-in-up animation-delay-400 text-lg text-white/60 sm:text-xl max-w-xl leading-relaxed">
@@ -212,22 +207,44 @@ export default function Home() {
 
         <div className="relative z-10 mx-auto max-w-6xl space-y-8">
           <div className="glass-card rounded-3xl border border-cyan/30 bg-cyan/5 p-8 sm:p-10">
-            <div className="max-w-4xl">
-              <p className="text-xs uppercase tracking-[0.2em] text-cyan/80">
-                Waves Mode
-              </p>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-5xl">
-                A complete focus cycle that guides you back when you drift
-              </h2>
-              <p className="mt-4 text-base leading-relaxed text-white/65 sm:text-lg">
-                Start by setting a blocklist or allowlist for apps and websites.
-                Waves builds intensity as you settle in, crescendos when you are
-                locked in, and keeps pushing momentum while you work.
-              </p>
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-cyan/80">
+                  Waves Mode
+                </p>
+                <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-5xl">
+                  A complete focus cycle that guides you back when you drift
+                </h2>
+                <p className="mt-4 text-base leading-relaxed text-white/65 sm:text-lg">
+                  Start by setting a blocklist or allowlist for apps and websites.
+                  Waves builds intensity as you settle in, crescendos when you are
+                  locked in, and keeps pushing momentum while you work.
+                </p>
+              </div>
+
+              <div className="relative aspect-[16/10] overflow-hidden rounded-xl border border-white/10 bg-black/20 shadow-2xl shadow-cyan/10">
+                <Image
+                  src="/Waves.png"
+                  alt="Waves mode session interface"
+                  fill
+                  sizes="(min-width: 1024px) 45vw, 100vw"
+                  className="object-contain"
+                />
+              </div>
             </div>
-            <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+            <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2">
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-                <h3 className="text-sm font-semibold text-white">
+                <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-white/10 bg-black/20">
+                  <Image
+                    src="/focus-guard.png"
+                    alt="FocusGuard blocklist and allowlist controls"
+                    fill
+                    sizes="(min-width: 640px) 50vw, 100vw"
+                    className="object-contain"
+                  />
+                </div>
+                <h3 className="mt-4 text-sm font-semibold text-white">
                   Set your boundaries
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-white/55">
@@ -235,8 +252,18 @@ export default function Home() {
                   to only permit your focused apps and sites.
                 </p>
               </div>
+
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-                <h3 className="text-sm font-semibold text-white">
+                <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-white/10 bg-black/20">
+                  <Image
+                    src="/crescendo.png"
+                    alt="Music intensity crescendo during focus session"
+                    fill
+                    sizes="(min-width: 640px) 50vw, 100vw"
+                    className="object-contain"
+                  />
+                </div>
+                <h3 className="mt-4 text-sm font-semibold text-white">
                   Music crescendos with your momentum
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-white/55">
@@ -244,8 +271,18 @@ export default function Home() {
                   progresses, then resolves as your wave completes.
                 </p>
               </div>
+
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-                <h3 className="text-sm font-semibold text-white">
+                <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-white/10 bg-black/20">
+                  <Image
+                    src="/Wave%20refocus.png"
+                    alt="Wave refocus warning when distracted"
+                    fill
+                    sizes="(min-width: 640px) 50vw, 100vw"
+                    className="object-contain"
+                  />
+                </div>
+                <h3 className="mt-4 text-sm font-semibold text-white">
                   Drift detection and reset
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-white/55">
@@ -253,8 +290,18 @@ export default function Home() {
                   wave resets so your next focused stretch starts clean.
                 </p>
               </div>
+
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-                <h3 className="text-sm font-semibold text-white">
+                <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-white/10 bg-black/20">
+                  <Image
+                    src="/voice-steering.png"
+                    alt="Voice steering to control music and blocklist"
+                    fill
+                    sizes="(min-width: 640px) 50vw, 100vw"
+                    className="object-contain"
+                  />
+                </div>
+                <h3 className="mt-4 text-sm font-semibold text-white">
                   Voice steering on the fly
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-white/55">
@@ -266,18 +313,29 @@ export default function Home() {
           </div>
 
           <div className="glass-card rounded-3xl border border-purple/30 bg-purple/5 p-8 sm:p-10">
-            <div className="max-w-4xl">
-              <p className="text-xs uppercase tracking-[0.2em] text-purple/80">
-                Surf Mode
-              </p>
-              <h2 className="mt-3 text-2xl font-bold tracking-tight text-white sm:text-4xl">
-                Adaptive flow music that keeps you in the zone
-              </h2>
-              <p className="mt-4 text-base leading-relaxed text-white/65 sm:text-lg">
-                Surf mode continuously adapts your soundtrack to your activity and
-                context, balancing familiarity and variation so you can stay in a
-                productive groove for longer.
-              </p>
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10">
+              <div className="order-2 lg:order-1">
+                <p className="text-xs uppercase tracking-[0.2em] text-purple/80">
+                  Surf Mode
+                </p>
+                <h2 className="mt-3 text-2xl font-bold tracking-tight text-white sm:text-4xl">
+                  Adaptive flow music that keeps you in the zone
+                </h2>
+                <p className="mt-4 text-base leading-relaxed text-white/65 sm:text-lg">
+                  Surf mode continuously adapts your soundtrack to your activity and
+                  context, balancing familiarity and variation so you can stay in a
+                  productive groove for longer.
+                </p>
+              </div>
+              <div className="order-1 relative aspect-[16/10] overflow-hidden rounded-xl border border-white/10 bg-black/20 shadow-2xl shadow-purple/10 lg:order-2">
+                <Image
+                  src="/Surf.png"
+                  alt="Surf mode adaptive music controls"
+                  fill
+                  sizes="(min-width: 1024px) 45vw, 100vw"
+                  className="object-contain"
+                />
+              </div>
             </div>
           </div>
         </div>
