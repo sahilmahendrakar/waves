@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   description:
     "AI-generated music that adapts to your focus. Waves is a macOS app that generates real-time adaptive music to keep you in the zone.",
   openGraph: {
-    title: "Waves — Your Desktop Musical Companion",
+    title: "Waves — Your Desktop Musical Pomodoro",
     description:
       "AI-generated music that adapts to your focus. Real-time adaptive music for macOS.",
     type: "website",
