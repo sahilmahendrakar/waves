@@ -106,7 +106,8 @@ export default function Home() {
 
           <div className="animate-fade-in-up animation-delay-600 flex flex-col items-center gap-4 sm:flex-row">
             <a
-              href="#"
+              href="/Waves.dmg"
+              download="Waves.dmg"
               className="glow-button inline-flex items-center gap-2.5 rounded-full px-8 py-3.5 text-base font-semibold text-white"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -350,7 +351,8 @@ export default function Home() {
           </p>
           <div className="mt-8 flex flex-col items-center gap-4">
             <a
-              href="#"
+              href="/Waves.dmg"
+              download="Waves.dmg"
               className="glow-button inline-flex items-center gap-2.5 rounded-full px-8 py-3.5 text-base font-semibold text-white"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
