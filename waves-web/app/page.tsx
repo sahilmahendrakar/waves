@@ -75,26 +75,6 @@ const features = [
   },
 ];
 
-const steps = [
-  {
-    number: "01",
-    title: "Launch from Menu Bar",
-    description: "Click the Waves icon in your macOS menu bar to get started.",
-  },
-  {
-    number: "02",
-    title: "Choose Your Mode",
-    description:
-      "Pick Waves mode for deep sessions, or Surf mode for auto-adapting flow.",
-  },
-  {
-    number: "03",
-    title: "Let Music Adapt",
-    description:
-      "The AI-generated music evolves in real time as you work, keeping you in flow.",
-  },
-];
-
 export default function Home() {
   return (
     <div className="min-h-screen overflow-x-hidden">
@@ -337,54 +317,6 @@ export default function Home() {
                 />
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ==================== HOW IT WORKS ==================== */}
-      <section className="relative px-6 py-32">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[300px] rounded-full bg-blue/5 blur-[150px]" />
-        </div>
-
-        <div className="relative z-10 mx-auto max-w-4xl">
-          <div className="mb-16 text-center">
-            <h2 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">
-              Get started in{" "}
-              <span className="bg-gradient-to-r from-cyan to-blue bg-clip-text text-transparent">
-                seconds
-              </span>
-            </h2>
-            <p className="mt-4 text-lg text-white/50">
-              Three simple steps to your perfect focus soundtrack.
-            </p>
-          </div>
-
-          <div className="relative grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-6">
-            <div className="absolute top-[60px] left-[16.67%] right-[16.67%] hidden h-px md:block step-connector" />
-
-            {steps.map((step, i) => (
-              <div key={step.number} className="relative flex flex-col items-center text-center">
-                <div className="relative mb-6 flex h-[72px] w-[72px] items-center justify-center rounded-2xl border border-white/10 bg-white/[0.03]">
-                  <span className="text-2xl font-bold bg-gradient-to-br from-cyan to-blue bg-clip-text text-transparent">
-                    {step.number}
-                  </span>
-                  {i < steps.length - 1 && (
-                    <div className="absolute -right-4 top-1/2 -translate-y-1/2 hidden md:block">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-white/20">
-                        <path fillRule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-                <h3 className="mb-2 text-lg font-semibold text-white">
-                  {step.title}
-                </h3>
-                <p className="text-sm leading-relaxed text-white/50 max-w-[240px]">
-                  {step.description}
-                </p>
-              </div>
-            ))}
           </div>
         </div>
       </section>
